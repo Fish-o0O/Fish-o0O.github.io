@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="referrer" content="no-referrer" />
+  <!--解决简书外链403-->
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>FILE结构体及漏洞利用方法 | Hacked By Fish_o0O</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="0x00 写在前面第一次接触FILE结构体，是在BCTF2018的baby_arena中，利用了FSOP，当时感觉结构体中字段太多了，没有理清楚到底是什么关系。也是时隔非常非常非常久，咸鱼的我终于开始系统的学习一下FILE结构体。本篇基于libc-2.27源码对该版本文件流的数据结构、相关操作以及一些常见的漏洞利用方法进行分析。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FILE结构体及漏洞利用方法">
+<meta property="og:url" content="http://fish-o0o.github.io/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/index.html">
+<meta property="og:site_name" content="Hacked By Fish_o0O">
+<meta property="og:description" content="0x00 写在前面第一次接触FILE结构体，是在BCTF2018的baby_arena中，利用了FSOP，当时感觉结构体中字段太多了，没有理清楚到底是什么关系。也是时隔非常非常非常久，咸鱼的我终于开始系统的学习一下FILE结构体。本篇基于libc-2.27源码对该版本文件流的数据结构、相关操作以及一些常见的漏洞利用方法进行分析。">
+<meta property="og:locale" content="zh">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-5657d087535a591e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-7d1b3a44a5afee73.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-f321d98af24706ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-509fd4f3c31b2ba4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-75e3e99f6d8f533d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-59e7bb31a10b0e8e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-d05c3415337f91ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-b8138887f5cfc336.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-6f1dbd9480994373.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-405fc708c4bb927b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-34f2906143d8329b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-b7ef7e1dee46a63c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-22b4a88fff914c54.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-bcd6def471f7b6cc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-84737a58622c32a4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-9a286d882c2775ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-c819c1082857fc6f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-11bf2a0ea40a2f7a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-df3b83fc82c0c12b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-6365d698715c1f55.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-34080a8283520c2a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-5af05fa775fe81da.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-cf6d63efb490d5dc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-b054ea0477b06bf0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-54e6f6fe0d6fefa0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-19d9461cec6a986e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-68ee81c90d94b175.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-e93cea2c6539dadf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-5087742c100b96bd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-633c55b0ae9a4f41.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-bb2b3bc71374d62f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-82719face09b2601.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-7232f74c875d2982.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-e075cd46723fd4f4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-5ce67115f0341211.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-4e13479e221abe0d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-8e1cfee8529a8c32.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-84b20ceebc2ae0d2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-97059da9f6a43558.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-4f9c1e2f2afa1ee0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-c2c53a727f467636.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-7aad24fe5c29d466.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-33a19ae348c65619.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-15fed9b616faff3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-9b2bea524a2cd4c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-df90bc41c8810b4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-0eb0d234ec9902b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-4691d11460defa08.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-126d484c9ed58e92.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-059475ff6ca581a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-5dd971733a7f2d07.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-87222aecb7aca5e5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-8add78f4224dbae7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-04ffb10e0191d12e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-b67a408b1f043fb7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-11617a5f823d0117.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-7304b1445b88fa61.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-29f1648d3d95daf1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-f241a48bff14704a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-b407fe126bed0312.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-2b6dd933c65d5997.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="https://upload-images.jianshu.io/upload_images/8447551-ad51abda8972a8d8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2019-12-29T19:18:00.000Z">
+<meta property="article:modified_time" content="2020-03-15T13:09:12.300Z">
+<meta property="article:author" content="Fish_o0O">
+<meta property="article:tag" content="随笔">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://upload-images.jianshu.io/upload_images/8447551-5657d087535a591e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternative" href="/atom.xml" title="Hacked By Fish_o0O" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.png" class="js-avatar">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Fish_o0O</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">KEEEEEEEEEP STUDY！</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder="搜索一下" autocomplete="off">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">主页</a></li>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">Tags</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="/Fish_o0O" title="github">github</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Pwn/" style="font-size: 20px;">Pwn</a> <a href="/tags/Vulnerability/" style="font-size: 10px;">Vulnerability</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 15px;">随笔</a>
+                    </div>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                
+                    <div id="js-aboutme">一个被兴趣牵着鼻子走的菜鸡</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Fish_o0O</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.png" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Fish_o0O</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">KEEEEEEEEEP STUDY！</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">Tags</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="/Fish_o0O" title="github">github</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-FILE结构体及漏洞利用方法" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/" class="article-date">
+      <time datetime="2019-12-29T19:18:00.000Z" itemprop="datePublished">2019-12-29</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      FILE结构体及漏洞利用方法
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h2 id="0x00-写在前面"><a href="#0x00-写在前面" class="headerlink" title="0x00 写在前面"></a>0x00 写在前面</h2><p>第一次接触<strong>FILE</strong>结构体，是在<a href="https://www.jianshu.com/p/e1effb2e046e" target="_blank" rel="noopener"><strong>BCTF2018</strong>的<strong>baby_arena</strong></a>中，利用了<strong>FSOP</strong>，当时感觉结构体中字段太多了，没有理清楚到底是什么关系。也是时隔非常非常非常久，咸鱼的我终于开始系统的学习一下<strong>FILE</strong>结构体。本篇基于<strong>libc-2.27</strong>源码对该版本文件流的数据结构、相关操作以及一些常见的漏洞利用方法进行分析。</p>
+<a id="more"></a>
+<h2 id="0x01-数据结构"><a href="#0x01-数据结构" class="headerlink" title="0x01 数据结构"></a>0x01 数据结构</h2><ul>
+<li><strong>_IO_FILE_plus</strong></li>
+</ul>
+<p>虽然每次都是说<strong>FILE</strong>结构体，但其实<strong>FILE</strong>结构体的外层还有一个结构体，叫做<strong>_IO_FILE_plus</strong>结构体。该结构体在<strong>glibc/libio/libioP.h</strong>中定义如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE_plus</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    FILE file;</span><br><span class="line">    <span class="keyword">const</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IO_jump_t</span> *<span class="title">vtable</span>;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>中间包含了一个我们常说的<strong>FILE</strong>结构体，以及<strong>_IO_jump_t</strong>的一个虚表结构体。</p>
+<ul>
+<li><strong>FILE/_IO_FILE</strong><br>在<strong>glibc/libio/bits/types/FILE.h</strong>中可以看到<strong>FILE</strong>结构体其实就是<strong>_IO_FILE</strong>结构体。<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE</span> <span class="title">FILE</span>;</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>_IO_FILE</strong>结构体在<strong>glibc/libio/bits/libio.h</strong>中定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="keyword">int</span> _flags;  <span class="comment">/* High-order word is _IO_MAGIC; rest is flags. */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* The following pointers correspond to the C++ streambuf protocol. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_read_ptr;        <span class="comment">/* Current read pointer */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_read_end;      <span class="comment">/* End of get area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_read_base;    <span class="comment">/* Start of puback+get area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_write_base;   <span class="comment">/* Start of put area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_write_ptr;      <span class="comment">/* Current put pointer. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_write_end;    <span class="comment">/* End of put area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_buf_base;     <span class="comment">/* Start of reserve area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_buf_end;      <span class="comment">/* End of reserve area. */</span></span><br><span class="line"> </span><br><span class="line">    <span class="comment">/* The following fields are used to support backing up and undo. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_save_base;           <span class="comment">/* Pointer to start of non-current get area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_backup_base;      <span class="comment">/* Pointer to first valid character of backup area. */</span></span><br><span class="line">    <span class="keyword">char</span> *_IO_save_end;            <span class="comment">/* Pointer to end of non-current get area. */</span></span><br><span class="line">    ......</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE</span> *_<span class="title">chain</span>;</span></span><br><span class="line">    <span class="keyword">int</span> _fileno;</span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">int</span> _flags2;</span><br><span class="line">    ......</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> _IO_USE_OLD_IO_FILE</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE_complete</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE</span> _<span class="title">file</span>;</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    ......</span><br><span class="line">    <span class="keyword">size_t</span> __pad5;</span><br><span class="line">    <span class="keyword">int</span> _mode;</span><br><span class="line">    <span class="keyword">char</span> _unused2[<span class="number">15</span> * <span class="keyword">sizeof</span>(<span class="keyword">int</span>) - <span class="number">4</span> * <span class="keyword">sizeof</span>(<span class="keyword">void</span>*) - <span class="keyword">sizeof</span>(<span class="keyword">size_t</span>)];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>其中<strong>_flags</strong>字段标志了该<strong>FILE</strong>结构体的读写等属性，该字段的前<strong>2</strong>个字节固定为<strong>0xFBAD</strong>的魔术头，其具体数值在<strong>glibc/libio/libio.h</strong>中进行宏定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Magic number and bits for the _flags field.  The magic number is</span></span><br><span class="line"><span class="comment">   mostly vestigial, but preserved for compatibility.  It occupies the</span></span><br><span class="line"><span class="comment">   high 16 bits of _flags; the low 16 bits are actual flag bits.  */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_MAGIC         0xFBAD0000 <span class="comment">/* Magic number */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_MAGIC_MASK    0xFFFF0000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_USER_BUF          0x0001 <span class="comment">/* Don't deallocate buffer on close. */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_UNBUFFERED        0x0002</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_NO_READS          0x0004 <span class="comment">/* Reading not allowed.  */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_NO_WRITES         0x0008 <span class="comment">/* Writing not allowed.  */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_EOF_SEEN          0x0010</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_ERR_SEEN          0x0020</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_DELETE_DONT_CLOSE 0x0040 <span class="comment">/* Don't call close(_fileno) on close.  */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_LINKED            0x0080 <span class="comment">/* In the list of all open files.  */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_IN_BACKUP         0x0100</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_LINE_BUF          0x0200</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_TIED_PUT_GET      0x0400 <span class="comment">/* Put and get pointer move in unison.  */</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_CURRENTLY_PUTTING 0x0800</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_IS_APPENDING      0x1000</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_IS_FILEBUF        0x2000</span></span><br><span class="line">                           <span class="comment">/* 0x4000  No longer used, reserved for compat.  */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_USER_LOCK         0x8000</span></span><br></pre></td></tr></table></figure>
+<p><strong>_IO_read_ptr</strong>字段为输入缓冲区的当前地址<br><strong>_IO_read_end</strong>字段为输入缓冲区的结束地址<br><strong>_IO_read_base</strong>字段为输入缓冲区的起始地址<br><strong>_IO_write_base</strong>字段为输出缓冲区的起始地址<br><strong>_IO_write_ptr</strong>字段为输出缓冲区的当前地址<br><strong>_IO_write_end</strong>字段为输出缓冲区的结束地址<br><strong>_IO_buf_base</strong>字段为输入输出缓冲区的起始地址<br><strong>_IO_buf_end</strong>字段为输入输出缓冲区的结束地址<br><strong>_chain</strong>字段为指向下一个<strong>_IO_FILE</strong>结构体的指针，在<strong>gilbc/libio/libioP.h</strong>中有如下声明：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IO_FILE_plus</span> *_<span class="title">IO_list_all</span>;</span></span><br></pre></td></tr></table></figure>
+<p>该变量为一个单链表的头结点，该单链表用于管理程序中所有的<strong>FILE</strong>结构体，并通过<strong>_chain</strong>字段索引下一个<strong>FILE</strong>结构体，每个程序中该链表的最后<strong>3</strong>个节点从后往前固定为<strong>_IO_2_1_stdin</strong>、<strong>_IO_2_1_stdout</strong>、<strong>_IO_2_1_stderr</strong>，之前是用户新申请的<strong>FILE</strong>结构体，每次新申请的<strong>FILE</strong>结构体会插在该链表的表头。大概长成下面这样：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-5657d087535a591e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_list_all"><br>值得注意的是，在<strong>_IO_FILE</strong>结构体定义的内部有一个宏<code>#ifdef _IO_USE_OLD_IO_FILE</code>，如果不存在<strong>_IO_USE_OLD_IO_FILE</strong>的宏定义，则会将后面的<strong>}</strong>以及下一个结构体<strong>_IO_FILE_complete</strong>的定义头给跳过，即扩充了<strong>_IO_FILE</strong>结构体，使其拥有了更多的字段。<strong>_IO_2_1_stdin</strong>、<strong>_IO_2_1_stdout</strong>、<strong>_IO_2_1_stderr</strong>的<strong>FILE</strong>结构体均为扩展后的。比如某次调试中的<strong>_IO_2_1_stdout</strong>结构如下(从<strong>_lock</strong>之后到<strong>vtable</strong>之前的字段均为扩展后的)：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-7d1b3a44a5afee73.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_2_1_stdin_"></p>
+<ul>
+<li><strong>_IO_jump_t</strong><br>该结构体在<strong>glibc/libio/libioP.h</strong>中定义如下:<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> _<span class="title">IO_jump_t</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    JUMP_FIELD(<span class="keyword">size_t</span>, __dummy);</span><br><span class="line">    JUMP_FIELD(<span class="keyword">size_t</span>, __dummy2);</span><br><span class="line">    JUMP_FIELD(_IO_finish_t, __finish);</span><br><span class="line">    JUMP_FIELD(_IO_overflow_t, __overflow);</span><br><span class="line">    JUMP_FIELD(_IO_underflow_t, __underflow);</span><br><span class="line">    JUMP_FIELD(_IO_underflow_t, __uflow);</span><br><span class="line">    JUMP_FIELD(_IO_pbackfail_t, __pbackfail);</span><br><span class="line">    <span class="comment">/* showmany */</span></span><br><span class="line">    JUMP_FIELD(_IO_xsputn_t, __xsputn);</span><br><span class="line">    JUMP_FIELD(_IO_xsgetn_t, __xsgetn);</span><br><span class="line">    JUMP_FIELD(_IO_seekoff_t, __seekoff);</span><br><span class="line">    JUMP_FIELD(_IO_seekpos_t, __seekpos);</span><br><span class="line">    JUMP_FIELD(_IO_setbuf_t, __setbuf);</span><br><span class="line">    JUMP_FIELD(_IO_sync_t, __sync);</span><br><span class="line">    JUMP_FIELD(_IO_doallocate_t, __doallocate);</span><br><span class="line">    JUMP_FIELD(_IO_read_t, __read);</span><br><span class="line">    JUMP_FIELD(_IO_write_t, __write);</span><br><span class="line">    JUMP_FIELD(_IO_seek_t, __seek);</span><br><span class="line">    JUMP_FIELD(_IO_close_t, __close);</span><br><span class="line">    JUMP_FIELD(_IO_stat_t, __stat);</span><br><span class="line">    JUMP_FIELD(_IO_showmanyc_t, __showmanyc);</span><br><span class="line">    JUMP_FIELD(_IO_imbue_t, __imbue);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> 0</span></span><br><span class="line">    get_column;</span><br><span class="line">    set_column;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+如上图所示，所有的<strong>FILE</strong>结构体的虚表指针均指向虚表<strong>_IO_file_jumps</strong>，在进行<strong>IO</strong>操作时，都会调用到该结构体中的函数。</li>
+</ul>
+<h2 id="0x02-相关操作"><a href="#0x02-相关操作" class="headerlink" title="0x02 相关操作"></a>0x02 相关操作</h2><h3 id="fopen"><a href="#fopen" class="headerlink" title="fopen"></a><strong>fopen</strong></h3><p><strong>fopen</strong>为<strong>stdio</strong>库中的函数，其在<strong>glibc/include/stdio.h</strong>中宏定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> fopen(fname, mode) _IO_new_fopen(fname, mode)</span></span><br></pre></td></tr></table></figure>
+<p>由<strong>stdio.h</strong>宏定义可知，平时我们常用的<strong>fopen</strong>函数其实为定义在<strong>glibc/libio/iofopen.c</strong>中的<strong>_IO_new_fopen</strong>函数，该函数直接调用了<strong>__fopen_internal</strong>函数。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-f321d98af24706ea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="__fopen_internal"></p>
+<ul>
+<li><strong>__fopen_internal</strong>函数中第<strong>58-65</strong>行声明了一个<strong>locked_FILE</strong>结构体变量指针<strong>new_f</strong>，该结构体中主要包含了<strong>_IO_FILE_plus</strong>和<strong>_IO_wide_data</strong>两个结构，并为该声明的变量分配了空间。</li>
+<li><strong>__fopen_internal</strong>函数中第<strong>72</strong>行调用了<strong>_IO_no_init</strong>函数对新申请的<strong>locked_FILE</strong>结构体进行了初始化，该函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-509fd4f3c31b2ba4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_no_init"><br>其中调用的<strong>_IO_old_init</strong>函数定义于其上方：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-75e3e99f6d8f533d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_old_init"><br>不难看出，<strong>_IO_old_init</strong>函数主要是对<strong>_IO_FILE_plus</strong>结构体中的各个元素进行初始化，而<strong>_IO_no_init</strong>主要是对<strong>_IO_wide_data</strong> 结构体中的各个元素进行初始化。通过两个结构体的初始化，初步猜测，<strong>_IO_FILE_plus</strong>结构体中元素及虚表主要用于单字节的文件流处理流程中，<strong>_IO_wide_data</strong>结构体中的元素及虚表主要用于宽字节的文件流处理流程中。</li>
+<li><strong>__fopen_internal</strong>函数中第<strong>73</strong>行调用了<strong>_IO_JUMPS</strong>函数对结构体的虚表进行了初始化，<strong>_IO_JUMPS</strong>函数在<strong>glibc/libio/libioP.h</strong>中宏定义如下：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_JUMPS(THIS) (THIS)-&gt;vtable</span></span><br></pre></td></tr></table></figure>
+即将<strong>_IO_FILE_plus</strong>结构体中的虚表指针赋值为虚表<strong>_IO_file_jumps</strong>的地址。</li>
+<li><strong>__fopen_internal</strong>函数中第<strong>74</strong>行调用了<strong>_IO_new_file_init_internal</strong>函数将新初始化的结构体链入<strong>_IO_list_all</strong>链表的头部，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-59e7bb31a10b0e8e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_init_internal"><br>该函数主要实现了将初始化好的<strong>_IO_FILE_plus</strong>结构体链入<strong>_IO_list_all</strong>链表头部的功能，其中链入链表的功能主要是由<strong>_IO_link_in</strong>函数进行实现，该函数定义在<strong>glibc/libio/genops.c</strong>中。除了实现链入功能外，还对<strong>_IO_FILE_plus</strong>结构体加入了相应的属性，如<strong>CLOSED_FILEBUF_FLAGS</strong>(可关闭？)属性以及<strong>_IO_link_in</strong>函数中的<strong>_IO_LINKED</strong>已链接属性第<strong>115</strong>行，对<strong>_fileno</strong>函数赋值为<strong>-1</strong>，该字段代表该文件流在<strong>_IO_list_all</strong>链表中的序号，此处赋值为<strong>-1</strong>相当于对该字段进行一个非法数值的初始化，后面会有<strong>_IO_file_is_open</strong>函数专门对<strong>_fileno</strong>数值是否合法进行<strong>check</strong>。</li>
+<li><strong>__fopen_internal</strong>函数中第<strong>78</strong>行调用了<strong>_IO_file_open</strong>函数，开始执行真正意义上的<strong>fopen</strong>操作，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">versioned_symbol(libc, _IO_new_file_fopen, _IO_file_fopen, GLIBC_2_1);</span><br></pre></td></tr></table></figure>
+即<strong>_IO_file_fopen</strong>函数等价于<strong>_IO_new_file_fopen</strong>函数，该函数定义于同一文件的第<strong>211</strong>行(太长了就不一次性全部贴了)。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-d05c3415337f91ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_fopen(1)"></li>
+</ul>
+<p><strong>_IO_new_file_fopen</strong>有<strong>4</strong>个参数，分别是文件指针、文件名、属性、是否为<strong>32</strong>位，其中第一个参数为前面步骤初始化的<strong>_IO_FILE</strong>结构体指针，第<strong>2、3</strong>两个参数为用户在调用<strong>stdio.h</strong>中<strong>fopen</strong>函数传入的参数，第四个参数为<strong>glibc/libio、iofopen.c</strong>中<strong>_IO_new_fopen</strong>函数调用<strong>__fopen_internal</strong>函数时传入的常亮<strong>1</strong>。该段代码除了声明变量外主要进行了<strong>2</strong>个操作：检查该文件流是否打开、根据调用参数的主属性为该文件流添加<strong>flag</strong>。<br>第一个操作通过调用<strong>_IO_file_is_open</strong>函数来实现，该函数在<strong>glibc/libio/libioP.h</strong>中宏定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _IO_file_is_open(__fp) ((__fp)-&gt;_fileno != -1)</span></span><br></pre></td></tr></table></figure>
+<p>即通过检查<strong>FILE</strong>结构体的<strong>_fileno</strong>是否为合法序号来判断检该文件流是否为已打开状态。<br>第二个操作则是通过<strong>mode</strong>，即<strong>fopen</strong>函数第二个参数的第一个字符来确定该文件流的属性，并添加对应的<strong>flag</strong>。在写入<strong>flag</strong>字段前，代码中有<strong>3</strong>个比那里那个来分别存储不同的属性，这三个变量分别是<strong>omode</strong>、<strong>oflags</strong>、<strong>read_write</strong>，其中<strong>omode</strong>标志文件的读写属性，<strong>oflags</strong>标志文件的修改方式，<strong>read_write</strong>标志文件内容的读写方式。有如下对应关系：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-b8138887f5cfc336.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="主属性对应关系"><br><strong>_IO_new_file_fopen</strong>继续往后走，代码如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-6f1dbd9480994373.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_fopen(2)"><br>该段代码主要进行了<strong>2</strong>个操作：通过文件流副属性获取对应的<strong>flag</strong>、调用<strong>_IO_file_open</strong>函数打开文件。<br>第一个操作与主属性的表示相似，副属性有如下的对应关系：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-405fc708c4bb927b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="附属性对应关系"><br>在将所有附属性遍历完后，会调用<strong>_IO_file_open</strong>函数用于打开文件并返回句柄，该函数有6个参数，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-34f2906143d8329b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_open"><br>该函数中，首先会判断<strong>FILE</strong>结构体的<strong>_flags2</strong>是否有<strong>_IO_FLAGS2_NOTCANCEL</strong>位，即是否含有<strong>c</strong>的副属性，若有则会调用<strong>__open_nocancel</strong>函数，若无则会调用<strong>__open</strong>函数，从这两个函数传入了相同的参数可以看出，这两个函数实现了相似的功能，两个函数在<strong>glibc/sysdeps/unix/sysv/linux/open64.c</strong>中有宏定义如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">strong_alias(__libc_open64 ,  __open);</span><br><span class="line">...</span><br><span class="line">strong_alias(__open64_nocancel, __open_nocancel);</span><br></pre></td></tr></table></figure>
+<p>以及还有在某些情况<strong>__open64_nocancel</strong>函数可以等价为<strong>__libc_open64</strong>函数的定义。在同一文件中，两个函数定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-b7ef7e1dee46a63c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="__libc_open64"><br><img src="https://upload-images.jianshu.io/upload_images/8447551-22b4a88fff914c54.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="__open64_nocancel"><br>可以看到这两个函数在<strong>return</strong>时均调用了<strong>INLINE_SYSCALL_CALL</strong>函数，即到最后将带有文件修改方式和读写属性的<strong>flag</strong>作为参数，调用<strong>SYSCALL</strong>进行打开文件操作，并将句柄返回。（再往底层就是直接宏定义汇编代码，就不继续深究<strong>INLINE_SYSCALL_CALL</strong>函数内部了）<br>返回后，回到<strong>_IO_file_open</strong>函数中，接下来将打开文件后的文件流序号赋值给<strong>_fileno</strong>字段，之后调用了<strong>_IO_mask_flags</strong>将具有读写方式的属性加入<strong>FILE</strong>结构体的<strong>flags</strong>字段中，若读写方式为<strong>a</strong>(追加)，则会将文件末尾作为文件的偏移。最后会调用<strong>_IO_link_in</strong>函数确保该结构体已链入<strong>_IO_list_all</strong>链表(因为在<strong>_IO_link_in</strong>函数中会有对<strong>_IO_LINKED</strong>的<strong>check</strong>，所以并不是重复链入)，至此<strong>_IO_file_open</strong>函数执行完毕。<br>从<strong>_IO_file_open</strong>返回后回到<strong>_IO_new_file_fopen</strong>函数，之后有的一个大段的<strong>if</strong>语句中，大概是给之前初始化的<strong>_wide_data</strong>中的各元素进行赋值，在<strong>if</strong>函数的最后将<strong>FILE</strong>结构体中的<strong>_mode</strong>字段赋值为<strong>1</strong>。该段代码大概如下(语句太长就不贴了)：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(result != <span class="literal">NULL</span>)</span><br><span class="line">&#123;</span><br><span class="line">    cs = <span class="built_in">strstr</span>(last_recognized +<span class="number">1</span> , <span class="string">",ccs="</span>);</span><br><span class="line">    <span class="keyword">if</span>(cs != <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        ......                  <span class="comment">//大概是给_wide_data中的各元素赋值</span></span><br><span class="line">        result-&gt;_mode = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> result;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>return</strong>后返回到<strong>__fopen_internal</strong>函数中，此时执行到了<strong>__fopen_internal</strong>函数的最后一步，如果上面调用<strong>_IO_file_fopen</strong>函数打开文件失败，则执行函数第<strong>81-83</strong>行：调用<strong>_IO_un_link</strong>函数将链入<strong>_IO_list_all</strong>的结构体摘除，并<strong>free</strong>掉为其申请的空间，之后<strong>return NULL</strong>；若打开文件成功，则会执行第<strong>79</strong>行：调用<strong>__fopen_maybe_mmap</strong>函数并返回。该函数在<strong>glibc/libio/iofopen.c</strong>中定义如下；<br><img src="https://upload-images.jianshu.io/upload_images/8447551-bcd6def471f7b6cc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="__fopen_maybe_mmap"><br>该函数会判断<strong>_flags2</strong>字段中是否含有<strong>_IO_FLAGS2_MMAP</strong>位，即在打开文件时是否有<strong>m</strong>属性，还会检查<strong>_flags</strong>字段中是否含有<strong>_IO_NO_WRITES</strong>位，即在打开文件时是否有<strong>r</strong>属性。即在打开文件时有<strong>rm</strong>两个属性，则会执行函数的主体部分，调用<strong>_IO_JUMPS_FILE_plus</strong>函数将重置<strong>FILE</strong>结构体的<strong>vtable</strong>虚表，该函数在<strong>glibc/libio/libioP.h</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-84737a58622c32a4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_JUMPS_FILE_plus"><blockquote>
+<p>以上，完成了对<strong>fopen</strong>函数源码的分析，该函数主要进行了<strong>3</strong>个操作：为文件流申请空间；初始化<strong>FILE</strong>结构体及虚表，包括将文件流链入<strong>_IO_list_all</strong>链表中；打开文件流，包括读取文件属性以及利用系统调用打开文件。<br>通过阅读源码，对文件属性有了<strong>船新</strong>的认识：</p>
+<ul>
+<li>除了日常用到的<strong>r/w/a/b/+</strong>之外还有<strong>x/m/c/e</strong>这<strong>4</strong>个属性，而且作为主属性的<strong>r/w/a</strong>必须在<strong>fopen</strong>第二个参数的开头，即只能<strong>wb</strong>而不能<strong>bw</strong>。</li>
+<li>在正常编写代码时宏观能够感到打开文件方式不一样的属性有<strong>r/w/a/+/x</strong>，而<strong>m/c/e</strong>这三个属性的采用，仅仅会在系统进行打开文件操作过程中进行一些不太影响大局的判断操作，在宏观上感觉不到。这可能也是<strong>FILE</strong>结构体中<strong>_flags</strong>和<strong>_flags2</strong>两个字段的区别。</li>
+<li>在上一点中所没提到的<strong>b</strong>属性，虽然一直知道是以二进制方式打开文件，但是在<strong>_IO_new_file_fopen</strong>函数中的关于副属性的<strong>switch…case</strong>语句中，<strong>b</strong>属性并没有什么卵用。没有加入任何<strong>flag</strong>标志位，只是将<strong>last_recognized</strong>赋值为<strong>b</strong>，即最后一个识别的属性是<strong>b</strong>。就算不考虑后续代码，只看<strong>switch…case</strong>语句的结果，当<strong>b</strong>属性后面跟有其他属性，那么<strong>b</strong>属性的<strong>case</strong>中没有留下任何东西(其他属性多多少少修改了<strong>_flags/_flags2</strong>字段)。</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h3 id="fread"><a href="#fread" class="headerlink" title="fread"></a><strong>fread</strong></h3><p><strong>fread</strong>函数的一般用法为</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fread( <span class="keyword">void</span> *<span class="built_in">buffer</span>, <span class="keyword">size_t</span> <span class="built_in">size</span>, <span class="keyword">size_t</span> count, FILE *stream );</span><br></pre></td></tr></table></figure>
+<p>该函数共有<strong>4</strong>个参数，<strong>buffer</strong>代表接收从文件读取数据的变量首地址，<strong>size</strong>代表每个对象的大小，<strong>count</strong>代表对象的个数，<strong>stream</strong>是代表文件流。即该函数实现了从<strong>stream</strong>中读<strong>size * count</strong>字节数据并赋给<strong>buffer</strong>所指向的地址。该函数在<strong>glibc/libio/iofread.c</strong>中有如下宏定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">weak_alias(_IO_fread , fread)</span><br></pre></td></tr></table></figure>
+<p>即<strong>fread</strong>函数原形为<strong>_IO_fread</strong>函数，该函数在同一文件中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-9a286d882c2775ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_fread"><br>该函数的最外层代码比较短，逻辑也很清晰，首先在第<strong>34</strong>行调用了<strong>CHECK_FILE</strong>函数对将要输入的文件流进行检查，该函数在<strong>glibc/libio/libioP.h</strong>中有宏定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-c819c1082857fc6f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="CHECK_FILE"><br>即当<strong>IO_DEBUG</strong>被定义时，会对<strong>FILE</strong>结构体的<strong>_flags</strong>字段进行<strong>_IO_MAGIC_MASK</strong>位的验证，若不存在，则说明传进来的不是<strong>FILE</strong>结构体，就<strong>return 0</strong>。<br>接下来在函数的第<strong>37、39</strong>行分别调用了<strong>_IO_acquire_lock</strong>和<strong>_IO_release_lock</strong>函数，用来加锁以及去锁。<br>在中间的第<strong>38</strong>行，调用了<strong>_IO_sgetn</strong>函数进行读入数据操作。经过辗转后发现该函数为虚表中的<strong>__xsgetn</strong>，即<strong>_IO_file_xsgetn</strong>函数，该函数定义于<strong>glibc/libio/fileop.c</strong>中，是<strong>fread</strong>函数的关键。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-11bf2a0ea40a2f7a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_xsgetn(1)"><br>该函数中定义了<strong>4</strong>个变量，分别是<strong>want</strong>表示还要读入的数据字节数、<strong>have</strong>表示输入缓冲区中剩余的空间大小、<strong>count</strong>表示要读出数据的个数、<strong>s</strong>表示接收读出数据的变量地址。由于我们刚从<strong>fopen</strong>初始化过来，因此<strong>FILE</strong>结构体中的各字段仍是空值，因此会进入在第<strong>1302-1311</strong>行的<strong>if-else</strong>语句，该语句首先判断该文件流中的<strong>_IO_save_base</strong>字段是否已经赋值，即文件流是否有备份的缓冲区，若有则会将该缓冲区<strong>free</strong>掉，并去掉<strong>_IO_IN_BACKUP</strong>位，最后调用<strong>_IO_doallocbuf</strong>函数。该函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-df3b83fc82c0c12b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_doallocbuf"><br>该函数经过一些检查后会调用<strong>_IO_DOALLOCATE</strong>函数，该函数在<strong>glibc/libio/libioP.h</strong>中有宏定义为<code>#define  _IO_DOALLOCATE(FP)  JUMP0(__doallocate , FP)</code>，即为虚表中的<strong>__doallocate</strong>，对应<strong>_IO_file_doallocate</strong>函数，该函数在<strong>glibc/libio/filedoalloc.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-6365d698715c1f55.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_doallocate"><br>可以看到在第<strong>94</strong>行给文件流字段加上了<strong>_IO_LINE_BUF</strong>字段，函数主要是在最后调用了<strong>malloc</strong>函数分配了<strong>size</strong>大小的空间给指针<strong>p</strong>，<strong>size</strong>在第<strong>83</strong>行被赋值为<strong>_IO_BUFSIZ</strong>,该字段有宏定义为<strong>8192</strong>，但在第<strong>84</strong>行调用了<strong>_IO_SYSSTAT</strong>函数，该函数为虚表中的<strong>__stat</strong>，对应着<strong>_IO_file_stat</strong>函数，该函数最终将调用<strong>syscall</strong>来获取该文件状态，并初始化结构体<strong>st</strong>，初始化后的<strong>st</strong>如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-34080a8283520c2a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="struct stat st"><br>因为在第<strong>97</strong>行存在判断，因此<strong>size</strong>最后赋值为<strong>st.blksize</strong>的<strong>0x1000</strong>字节，即<strong>4K</strong>大小。紧接着调用了<strong>_IO_setb</strong>函数，该函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-5af05fa775fe81da.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_setb"><br>该函数主要实现了对<strong>_IO_buf_base</strong>和<strong>_IO_buf_end</strong>两个字段进行赋值。到这里可以知道<strong>_IO_doallocbuf</strong>函数实现了给文件流分配<strong>4K</strong>空间用作缓存缓冲区的操作。紧接着回到<strong>_IO_file_xsgetn</strong>函数是一个<strong>100</strong>多行的<strong>while</strong>循环：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-cf6d63efb490d5dc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_xsgetn(2)"></p>
+<ul>
+<li><strong>n &lt;= 4K</strong></li>
+</ul>
+<p>因为是刚刚完成初始化的文件流，第一次进行<strong>fread</strong>时所以会进入第<strong>1341</strong>行的判断语句，则会调用<strong>__underflow</strong>函数，该函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-b054ea0477b06bf0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="__underflow"><br>该函数经过一系列检查后调用了<strong>_IO_UNDERFLOW</strong>函数，该函数即虚表中的<strong>__underflow</strong>字段，对应<strong>_IO_new_file_underflow</strong>函数，该函数定义在<strong>glibc/libio/fileop.c</strong>中，进入函数后按照当前状态会直接跳过前面的检查，直接从第<strong>520</strong>行开始执行，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-54e6f6fe0d6fefa0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_underflow(partial)"><br>首先将<strong>read</strong>和<strong>write</strong>的<strong>6</strong>个字段都初始化为<strong>_IO_buf_base</strong>，之后调用<strong>_IO_SYSREAD</strong>函数尝试从<strong>fp</strong>中读<strong>_IO_buf_end - _IO_buf_base</strong>即<strong>4K</strong>大小的数据到从<strong>_IO_buf_base</strong>开始的空间中，该函数的原形为虚表中的<strong>__read</strong>，对应<strong>_IO_file_read</strong>函数。该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-19d9461cec6a986e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_read"><br>该函数再往下就是调用<strong>__read()</strong>或<strong>__read_nocancel()</strong>直接进行系统调用进行读入，返回值为实际读取的大小，赋值给<strong>count</strong>。若正常读取成功，则会将<strong>_IO_read_end</strong>和<strong>offset</strong>字段增加<strong>count</strong>的大小，返回<strong>_IO_read_ptr</strong>的值。调用完该函数后，返回<strong>_IO_file_xsgetn</strong>函数，此时该文件中最多<strong>4K</strong>大小的数据已经被读入到了缓存缓冲区中，且<strong>_IO_read_base</strong>和<strong>_IO_read_end</strong>两个指针分别对应这想要读入的数据的起始位置和终止位置，相当于输入缓冲区，此时执行<strong>continue</strong>，重新开始循环，进入第<strong>1316</strong>行的判断语句，直接调用<strong>memcpy</strong>函数，将数据从输入缓冲区中拷贝如目标变量中，<strong>_IO_read_ptr</strong>字段加上相应大小，此时所有数据全部读入，<strong>want</strong>赋值为<strong>0</strong>，一路执行，最后跳出循环。</p>
+<ul>
+<li><strong>n &gt; 4K</strong><br>若读取数据大小大于<strong>4K</strong>，则不会进入第<strong>1341</strong>行的判断句，而是继续往下执行：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-68ee81c90d94b175.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_xsgetn(3)"><br>紧接着调用了<strong>_IO_setg</strong>和<strong>_IO_setp</strong>两个函数，这两个函数在<strong>glibc/libio/libioP.h</strong>中有宏定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-e93cea2c6539dadf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_setp/_IO_setg"><br>即实现了将<strong>FILE</strong>结构体中的<strong>read</strong>和<strong>write</strong>相关共<strong>6</strong>个指针均初始化为<strong>_IO_buf_base</strong>的功能。随后在<strong>1357</strong>行的判断中，是将之前分配的缓冲区大小作为一个<strong>block_size</strong>，因为这条分支接下来会直接调用<strong>_IO_SYSREAD</strong>函数，将数据直接从文件流中读入变量中而不经过缓冲区，所以为了(优化性能？)，每次只读取<strong>block_size</strong>大小的数据，即<strong>4K</strong>。调用完<strong>_IO_SYSREAD</strong>后<strong>want</strong>会减去<strong>4K</strong>再次进行循环，直到最后小于<strong>4K</strong>的一部分，会和上面<strong>n &lt;= 4K</strong>经历相同的过程，并退出循环。<blockquote>
+<p>至此，分析完了<strong>fread</strong>函数主要流程，尤其是<strong>_IO_file_xsgetn</strong>函数的执行流程。<strong>fread</strong>函数主要进行了<strong>1</strong>个操作，调用<strong>_IO_file_xsgetn</strong>函数，当然加锁也是比较重要的。<strong>_IO_file_xsgetn</strong>函数，主要进行了<strong>3</strong>个操作：调用<strong>_IO_doallocbuf</strong>给<strong>FILE</strong>结构体分配缓冲区；当<strong>n &lt;= block_size</strong>时，调用<strong>_IO_file_underflow</strong>将文件流中的数据读入缓冲区再调用<strong>memcpy</strong>从缓冲区拷贝至目标变量中；当<strong>n &gt; block_size</strong>时，大部分先对齐到<strong>block_size</strong>，调用<strong>_IO_SYSREAD</strong>函数直接从文件流读入到目标变量，若还有剩余的数据再用老方从走缓冲区拷贝到目标变量中。<br>通过阅读源码，对<strong>FILE</strong>结构体以及其中各字段所代表的含义有了船新的认识：</p>
+<ul>
+<li>首先是从<strong>_IO_read_ptr</strong>到<strong>_IO_buf_end</strong>这<strong>8</strong>个字段，原本认为是共申请了<strong>3</strong>个缓冲区，通过阅读源码后知道了只申请了<strong>1</strong>个缓冲区，其中<strong>_IO_buf_base</strong>和<strong>_IO_buf_end</strong>指向这个缓冲区的两端，其余<strong>6</strong>个<strong>read</strong>和<strong>write</strong>字段没事的时候都与<strong>_IO_buf_base</strong>的值相同，在进行读操作时，相当于<strong>3</strong>个<strong>read</strong>指针起作用控制缓冲区中的内容，可以推出在进行写操作时，<strong>3</strong>个<strong>read</strong>指针与<strong>_IO_buf_base</strong>的值相同，而<strong>3</strong>个<strong>write</strong>指针独起作用控制缓冲区中的内容。</li>
+<li>其次<strong>_IO_save_base</strong>到<strong>_IO_save_end</strong>这<strong>3</strong>个字段，因为在该段代码中只存在几处判断，并没有实际用处，所以判断大概是为了保存某个时刻缓冲区而设置的指针。</li>
+<li>最后是在调试时发现的<strong>FILE</strong>结构体有多种形态，比如我在调试时看到的<strong>FILE</strong>结构体实际上是<strong>glibc/libio/bits/libio.h</strong>中定义的<strong>_IO_FILE_complete</strong>结构体。最终究其原因，是因为有个宏判断把定义结构体的大括号给吃掉了。如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-5087742c100b96bd.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="骚骚的宏判断"></li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h3 id="fwrite"><a href="#fwrite" class="headerlink" title="fwrite"></a><strong>fwrite</strong></h3><p><strong>fwrite</strong>函数的一般用法为</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fwrite(<span class="keyword">const</span> <span class="keyword">void</span>* <span class="built_in">buffer</span>, <span class="keyword">size_t</span> <span class="built_in">size</span>, <span class="keyword">size_t</span> count, FILE* stream);</span><br></pre></td></tr></table></figure>
+<p>与<strong>fread</strong>函数相似，该函数共有<strong>4</strong>个参数，<strong>buffer</strong>代表存储要写入文件数据的首地址，<strong>size</strong>代表每个对象的大小，<strong>count</strong>代表对象的个数，<strong>stream</strong>代表文件流。即该函数实现了将<strong>buffer</strong>中<strong>size * count</strong>字节数据写入<strong>stream</strong>文件流的操作。该函数在<strong>glibc/libio/iofwrite.c</strong>中有如下宏定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">weak_alias(_IO_fwrite , fwrite)</span><br></pre></td></tr></table></figure>
+<p>即<strong>fwrite</strong>函数原形为<strong>_IO_fwrite</strong>函数，该函数在同一文件中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-633c55b0ae9a4f41.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_fwrite"><br>也是一样的调用了<strong>CHECK_FILE</strong>函数进行检查，以及在调用关键函数前后加锁与去锁。在第<strong>39</strong>行调用了函数<strong>_IO_sputn</strong>，该函数在经过一系列定义和宏定义后为虚表中的<strong>__xsputn</strong>，即<strong>_IO_new_file_xsputn</strong>函数，该函数定义在<strong>glibc/libio/fileops.c</strong>中，是<strong>fwrite</strong>函数的关键。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-bb2b3bc71374d62f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_xsputn(1)"><br>该函数中有<strong>3</strong>个比较重要的变量，分别是<strong>s</strong>表示放有待写入数据变量的首地址，<strong>to_do</strong>表示还需要写入的字节数，<strong>must_flush</strong>表示是否需要刷新缓冲区。接下来也是按照刚从<strong>fopen</strong>初始化完的状态开始分析。此时各字段均为空，也没有<strong>_IO_LINE_BUF、_IO_CURRENTLY_PUTTING</strong>属性，所以不会进入第<strong>1233、1250</strong>行的判断句，所以<strong>count</strong>变量没有被赋值仍然为<strong>0</strong>，也不会进入第<strong>1254</strong>行的判断语句。而<strong>to_do</strong>代表的需要写入的字节数没有变，因此会直接进入第<strong>1262</strong>行的判断语句，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-82719face09b2601.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_xsputn(2)"><br>进入语句后，声明了两个变量<strong>block_size</strong>和<strong>do_write</strong>，之后直接调用了<strong>_IO_OVERFLOW</strong>函数，该函数为虚表中的<strong>__overflow</strong>，即<strong>_IO_new_file_overflow</strong>函数，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-7232f74c875d2982.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_overflow(1)"><br>该函数首先判断文件是否含有<strong>_IO_NO_WRITES</strong>属性，即在<strong>fopen</strong>操作时是否为<strong>r</strong>只读选项，若是，则不会执行该函数直接返回。接着判断是否不含<strong>_IO_CURRENTLY_PUTTING</strong>属性或者<strong>_IO_write_base</strong>字段为空，其中<strong>_IO_CURRENTLY_PUTTING</strong>属性在该函数的第<strong>785</strong>行会进行赋值，因此该语句为判断没有正常执行过<strong>_IO_new_file_overflow</strong>函数或执行过但没有分配缓冲区的情况，会调用<strong>_IO_doallocbuf</strong>函数分配缓冲区，之后调用<strong>_IO_setg</strong>将与<strong>read</strong>相关的<strong>3</strong>个字段都赋值为<strong>_IO_buf_base</strong>，之后也会进行<strong>_IO_in_backup</strong>的检测，这几步操作在上一节<strong>_IO_new_file_underflow</strong>函数中有过详细描述，因此不再赘述。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-e075cd46723fd4f4.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_overflow(2)"><br>紧接着将<strong>read</strong>和<strong>write</strong>共<strong>6</strong>个字段都赋值为<strong>_IO_buf_base</strong>，并给文件流加上<strong>_IO_CURRENTLY_PUTTING</strong>属性。由于在<strong>_IO_new_file_xsputn</strong>调用该函数时的第二个参数，即函数中的<strong>ch</strong>变量为<strong>EOF</strong>，因此，会在第<strong>790</strong>行调用<strong>_IO_do_write</strong>函数并返回，传入的<strong>3</strong>个参数分别为<strong>FILE</strong>结构体指针、<strong>_IO_write_base</strong>以及<strong>_IO_write_ptr - _IO_write_base = 0</strong>。该函数在<strong>glibc/libio/fileops.c</strong>中有宏定义为<strong>_IO_new_do_write</strong>函数，其定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-5ce67115f0341211.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_do_write"><br>可以看到<strong>_IO_new_do_write</strong>函数中，因为本次传入的第<strong>3</strong>个参数<strong>to_do</strong>为<strong>0</strong>，因此不会进行任何操作直接返回<strong>0</strong>，而不会去执行<strong>new_do_write</strong>函数。返回后回到<strong>_IO_new_file_xsputn</strong>的第<strong>1266</strong>行，不等于<strong>EOF</strong>，于是会继续执行。给<strong>block_size</strong>赋值为申请的空间大小，即<strong>4K</strong>，<strong>do_write</strong>代表通过调用<strong>new_do_write</strong>函数进行写入的数据大小，该数值是与<strong>block_size</strong>进行对齐的。接下来也是根据<strong>to_do</strong>与<strong>block_size</strong>的大小，函数将分成不同的流程。</p>
+<ul>
+<li><strong>to_do &lt; 4K</strong></li>
+</ul>
+<p>若要写入的数据小于<strong>4K</strong>，则<strong>do_write = 0</strong>，不会进入第<strong>1275</strong>行的判断语句，而是在<strong>1287</strong>行直接调用<strong>_IO_default_xsputn</strong>函数进行处理，该函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-4e13479e221abe0d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_default_xsputn"><br>该函数主要实现了将数据从变量中拷贝到结构体缓冲区中的操作，主要有两种情况，一种是当要拷贝的数据大于<strong>20</strong>字节时，会直接调用<strong>__mempcpy</strong>进行拷贝，如果小于等于<strong>20</strong>，则用<strong>for</strong>循环逐字节进行拷贝，若缓冲区大小不够，则会调用<strong>_IO_OVERFLOW</strong>刷新缓冲区。<br>值得注意的是，<strong>_IO_default_xsputn</strong>函数仅仅实现了将数据从变量中拷贝到了从<strong>_IO_write_base</strong>到<strong>_IO_write_ptr</strong>为止的缓冲区中，并没有写入文件。</p>
+<ul>
+<li><strong>to_do &gt;= 4K</strong><br>若要写入的数据大于<strong>4K</strong>，则<strong>do_write</strong>被赋值为<strong>4K</strong>的倍数，将在第<strong>1277</strong>行调用<strong>new_do_write</strong>函数进行写入，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-8e1cfee8529a8c32.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="new_do_write"><br>首先会判断是否具有<strong>_IO_IS_APPENDING</strong>属性，即判断该文件是由<strong>a</strong>属性打开还是由<strong>w</strong>属性打开：若为<strong>w</strong>属性，则将<strong>_offset</strong>字段赋值为<strong>-1</strong>；若为<strong>a</strong>属性，则<strong>_offset</strong>字段不变，这正是写文件时覆盖和追加方式的体现。之后判断<strong>_IO_read_end</strong>与<strong>_IO_write_base</strong>相等，若不等则调用<strong>_IO_SYSSEEK</strong>函数。对于本次调用的流程，这两个判断语句不会有太大的影响。主要是在函数的第<strong>457</strong>行执行了<strong>_IO_SYSWRITE</strong>函数，该函数为虚表中的<strong>__write</strong>，即为<strong>_IO_new_file_write</strong>函数，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-84b20ceebc2ae0d2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_write"><br>该函数也是通过调用<strong>__write</strong>函数或<strong>__write_nocancel</strong>函数进行系统调用，将<strong>to_do</strong>长度的数据从<strong>data</strong>中写入文件中。调用完<strong>_IO_SYSWRITE</strong>函数后，若读入成功，即<strong>count</strong>不为<strong>0</strong>，在之后会调用<strong>_IO_adjust_column</strong>函数去更新<strong>FILE</strong>结构体中的<strong>_cur_column</strong>字段，该字段代表<strong>（</strong>文件的行数<strong>+1)</strong>，该函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-97059da9f6a43558.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_adjust_column"><br>该函数通过判断上面通过<strong>_IO_SYSWRITE</strong>函数写入的数据中含有多少<strong>\n</strong>字符来确定文件中增加了多少行。调用完<strong>_IO_adjust_column</strong>后返回到<strong>new_do_write</strong>函数，之后会调用<strong>_IO_setg</strong>函数以及各种赋值操作将文件流中<strong>read、write</strong>相关<strong>6</strong>个字段都赋值为<strong>_IO_buf_base</strong>，类似于初始化的操作。综上，<strong>new_do_write</strong>函数完成了将对齐<strong>block_size</strong>大小的数据不通过缓冲区，直接从变量写入文件流的操作。从<strong>new_do_write</strong>函数返回后，之前未对齐的剩余的数据，则会在下方调用<strong>_IO_default_xsputn</strong>函数拷贝到缓冲区中。<blockquote>
+<p>至此，分析完了<strong>fwrite</strong>函数主要流程，尤其是<strong>_IO_new_file_xsputn</strong>函数的执行流程。<strong>fwrite</strong>函数与<strong>fread</strong>相互对仗，<strong>fread</strong>是将文件中数据直接读入变量，或先从文件读入<strong>FILE</strong>结构体缓冲区，再利用<strong>read</strong>相关指针进行间接读入变量；<strong>fwrite</strong>是将数据直接从文件中写入变量或写入<strong>FILE</strong>结构体中的缓冲区。<strong>_IO_new_file_xsputn</strong>作为实现<strong>fwrite</strong>的重要函数，主要进行了<strong>**个操作：调用</strong>_IO_new_file_overflow<strong>函数为</strong>FILE<strong>结构体申请缓冲区；若</strong>n &lt; block_size<strong>时，直接调用</strong>__mempcpy<strong>函数拷贝到缓冲区中；若</strong>n &gt;= block_size<strong>时，会将对齐到</strong>block_size<strong>的部分用系统调用直接读入文件，剩余部分按与</strong>n &lt; block_size<strong>相同的方法拷贝到缓冲区中。<br>通过阅读源码，对</strong>fwrite**函数有了船新认识：</p>
+<ul>
+<li>本以为<strong>fwrite</strong>只是把<strong>fread</strong>的读操作变成写操作，其他都是相同的。然而<strong>fread</strong>执行完后不论多少数据都读入了变量中，而<strong>fwrite</strong>执行完后未对齐<strong>block_size</strong>大小的数据仍在缓冲区中，推测在执行<strong>fclose</strong>函数或在程序退出时才会真正的写入文件中。</li>
+<li><strong>_IO_new_file_overflow</strong>函数并不仅仅有上文中描述的调用<strong>_IO_doallocbuf</strong>申请缓冲区的作用，其主要担负着刷新缓冲区的作用：第一种调用情况为上文中所提到的，当<strong>_IO_buf_base</strong>字段为空，即还未初始化缓冲区时，则会调用<strong>_IO_doallocbuf</strong>函数进行申请缓冲区；若缓冲区已经初始化，且<strong>_IO_write_end == _IO_write_ptr</strong>，即缓冲区已满时，则会把这些待写入内容写入文件，之后会将<strong>_IO_write_ptr</strong>赋值为<strong>_IO_buf_base</strong>，相当于清空缓冲区的操作。</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h3 id="fclose"><a href="#fclose" class="headerlink" title="fclose"></a><strong>fclose</strong></h3><p>与<strong>fopen</strong>函数相同，在<strong>glibc/include/stdio.h</strong>中有如下宏定义：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> fclose(fp) _IO_new_fclose(fp)</span></span><br></pre></td></tr></table></figure>
+<p>即<strong>fclose</strong>函数的原形为<strong>_IO_new_fclose</strong>函数，该函数在<strong>glibc/libio/iofclose.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-4f9c1e2f2afa1ee0.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_fclose"><br>该函数主要是<strong>fopen</strong>函数的逆过程，首先在判断文件流是否含有<strong>_IO_file_flags</strong>和<strong>_IO_SI_FILEBUF</strong>后，函数会执行<strong>_IO_un_link</strong>函数，该函数在<strong>glibc/libio/genops.c</strong>定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-c2c53a727f467636.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_un_link"><br>该函数是<strong>_IO_link_in</strong>函数的逆过程，主要实现了将文件流从<strong>_IO_list_all</strong>链表中卸下，以及一些对结构体中字段的善后操作。接着调用了<strong>_IO_file_close_it</strong>函数，该函数在<strong>glibc/libio/fileops.c</strong>定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-7aad24fe5c29d466.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_close_it"><br>该函数在第<strong>134</strong>行判断是否为写属性的文件流，以及是否进行过写操作，若有，则会调用<strong>_IO_do_flush</strong>函数，该函数在<strong>glibc/libio/libioP.h</strong>中有宏定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-33a19ae348c65619.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_do_flush"><br>可以看到该函数直接是针对文件流的整个缓冲区去调用了<strong>_IO_do_write</strong>函数，即实现了将仍存在于缓冲区中的数据写入文件的操作。之后调用<strong>_IO_SYSCLOSE</strong>函数，该函数对应虚表中的<strong>__close</strong>，即<strong>_IO_file_close</strong>函数，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-15fed9b616faff3c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_file_close"><br>该函数直接调用了<strong>__close_nocancel</strong>函数去执行系统调用对文件进行关闭。返回到<strong>_IO_new_file_close_it</strong>之后紧接着调用<strong>_IO_setb、_IO_setg、_IO_setp</strong>等函数将文件流中所有<strong>read</strong>和<strong>write</strong>字段置<strong>0</strong>，并在第<strong>159-161</strong>行将<strong>_flags、_fileno_offset</strong>修改为一个关闭状态的属性。返回到<strong>_IO_new_fclose</strong>函数后，主要去执行了<strong>_IO_FINISH</strong>函数，该函数为虚表中的<strong>__finish</strong>，即对应<strong>_IO_new_file_finish</strong>函数，该函数在<strong>glibc/libio/fileops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-9b2bea524a2cd4c5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_new_file_finish"><br>该函数一次调用了<strong>_IO_do_flush、_IO_SYSCLOSE</strong>以及<strong>_IO_default_finish</strong>函数，其中<strong>_IO_default_finish</strong>函数在<strong>glibc/libio/genops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-df90bc41c8810b4e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_default_finish"><br>可以看到<strong>_IO_new_file_finish</strong>中调用的几个函数，均在前面正常关闭的流程中有过调用，所以基本上都不会去执行。</p>
+<blockquote>
+<p>至此，完成了对<strong>fclose</strong>函数流程的分析，总的来说代码比较短暂，也都是对前面已经执行代码的一个逆过程，因此并没有太多需要注意的地方，主要还是印证了前面在<strong>fwrite</strong>结尾的一个预测，会在关闭文件流时去调用了<strong>_IO_do_flush</strong>函数将缓冲区内的数据写入文件。</p>
+</blockquote>
+<h2 id="0x03-利用方法"><a href="#0x03-利用方法" class="headerlink" title="0x03 利用方法"></a>0x03 利用方法</h2><h3 id="利用伪造stdout进行任意地址读"><a href="#利用伪造stdout进行任意地址读" class="headerlink" title="利用伪造stdout进行任意地址读"></a>利用伪造<strong>stdout</strong>进行任意地址读</h3><p><strong>stdout</strong>，即标准输出，默认为当前终端，其本质也为一个<strong>FILE</strong>结构体，利用这种方法最终达到将任意地址数据输出到终端供我们进行读的效果。因此首先定位到<strong>fwrite</strong>函数中输出的位置，即调用<strong>_IO_SYSWRITE</strong>的地方。由前小节的分析可知，只有在<strong>new_do_write</strong>函数中有对<strong>_IO_SYSWRITE</strong>的调用，而调用<strong>new_do_write</strong>理论上有两个地方，一个是在<strong>_IO_new_file_xsputn</strong>函数中的第<strong>1266</strong>行调用<strong>_IO_OVERFLOW</strong>函数中会有调用，以及在第<strong>1277</strong>行直接进行调用。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-0eb0d234ec9902b6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="调用_new_do_write"><br>第一种调用情况，在利用<strong>_IO_OVERFLOW</strong>函数通过调用<strong>_IO_do_write</strong>函数，实现间接调用<strong>new_do_write</strong>函数将<strong>_IO_write_base</strong>到<strong>_IO_write_ptr</strong>之间的数据进行写入。<br>首先我们需要获得执行到<strong>_IO_OVERFLOW</strong>函数的条件，主要还是第<strong>1262</strong>行的<strong>to_do + must_flush &gt; 0</strong>，因为正常函数调用时传进来的<strong>to_do</strong>均大于<strong>0</strong>，因此必然会进入该语句，所以前置条件几乎算是没有；<br>接下来进入<strong>_IO_OVERFLOW</strong>函数内部进行分析调用<strong>new_do_write</strong>函数的条件。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-4691d11460defa08.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="条件判断(1)"><br>可以看到在我们最终调用<strong>_IO_do_write</strong>函数之前会有2个比较关键的判断：第<strong>747</strong>行判断是否有写权限，若没有则会报错并返回，因此搜集到的第一个必要条件为：<code>f-&gt;_flags &amp; _IO_NO_WRITES == 0</code>；接下来一个重要判断是在第<strong>754</strong>行的判断，经过上一节的分析我们知道这个判断是用来判断缓冲区是否初始化的，若未初始化则会进入该判断语句，由于在该判断分支中最后会将<strong>FILE</strong>结构体中的<strong>write</strong>相关指针进行重新赋值，从而破坏了我们事先构造好的<strong>write</strong>指针，所以这个判断也不能进入，因此搜集到的第二个必要条件为<code>f-&gt;_flags &amp; _IO_CURRENTLY_PUTTING != 0</code>。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-126d484c9ed58e92.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="条件判断(2)"><br>之后进入<strong>_IO_do_write</strong>函数，这个函数比较简单，只要满足<code>f-&gt;_IO_write_ptr - f-&gt;_IO_write_base != 0</code>便可调用<strong>new_do_write</strong>函数；最后在<strong>new_do_write</strong>函数中，只要满足<code>fp-&gt;_IO_read_end == fp-&gt;_IO_write_base</code>即可调用<strong>_IO_SYSWRITE</strong>将<strong>_IO_write_base</strong>到<strong>_IO_write_ptr</strong>之间的数据输出。<br>第二种调用情况，是在第<strong>1277</strong>行直接调用<strong>new_do_write</strong>函数，因为此处第二个参数，即输出的数据段起始地址为外部传入参数，而不能通过伪造<strong>FILE</strong>结构体来进行控制，因此不能实现任意地址读的功能，直接<strong>PASS</strong>掉。</p>
+<blockquote>
+<p>综上，我们只要伪造满足这<strong>4</strong>个条件的<strong>stdout</strong>结构体就能够实现任意地址读，其中第<strong>1、2</strong>个条件为文件流<strong>不能</strong>具有<strong>_IO_NO_WRITES（0x8）</strong>属性，且具有<strong>_IO_CURRENTLY_PUTTING（0x800）</strong>属性，而且<strong>_flags</strong>位自带一个<strong>_IO_MAGIC（0xfbad0000）</strong>，因此构造的<strong>_flags</strong>为<strong>0xfbad0800</strong>。第<strong>3、4</strong>个条件就和<strong>read、write</strong>指针息息相关了，根据条件只要构造<strong>_IO_read_end = _IO_write_base = （</strong>想要<strong>leak</strong>的起始地址<strong>)</strong>，<strong>_IO_write_ptr = (</strong>想要<strong>leak</strong>的结束地址<strong>)</strong>，其他<strong>3</strong>个没有提到的指针置<strong>0</strong>就可以了。<br>因此伪造的<strong>fake_FILE</strong>结构体大概长这样（一般用<strong>got</strong>表进行<strong>libc</strong>的<strong>leak</strong>）：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-059475ff6ca581a2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="fake_FILE"><br>在我们最终伪造好这个<strong>FILE</strong>结构体后再去调用针对<strong>stdout</strong>进行输出的函数就可以实现任意地址读了，常见的函数一般有<strong>printf、fwrite、puts</strong>等。</p>
+</blockquote>
+<h3 id="利用伪造stdout进行任意地址写"><a href="#利用伪造stdout进行任意地址写" class="headerlink" title="利用伪造stdout进行任意地址写"></a>利用伪造<strong>stdout</strong>进行任意地址写</h3><p>在<strong>_IO_new_file_xsputn</strong>函数中，不仅调用了<strong>_IO_SYSWRITE</strong>进行了输出，而且也有调用<strong>__mempcpy</strong>函数将要输出的数据写入缓冲区的操作，该操作在函数中的第<strong>1258</strong>行，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-5dd971733a7f2d07.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="写入缓冲区"><br>根据调用的参数，可通过伪造<strong>FILE</strong>结构体达到将<strong>s</strong>中数据向我们可控指针<strong>f-&gt;_IO_write_ptr</strong>中写的操作，即不可控制内容的任意地址写。可以看到执行该语句的最主要判断为<strong>count &gt; 0</strong>，而<strong>count</strong>变量在上方有多次赋值操作，对于已经控制了<strong>FILE</strong>结构体的我们来说轻而易举，但在执行之前会与<strong>to_do</strong>变量进行比较，取较小的长度进行写入，其中<strong>to_do</strong>变量为调用时想要写入的长度，一般为字符串的长度。如，<code>puts(&quot;12345678&quot;)</code>在调用该函数时，<strong>to_do</strong>的值就为<strong>8</strong>，<strong>s</strong>变量就是指向<strong>12345678</strong>这个字符串的开头。</p>
+<blockquote>
+<p>综上，我们只需要构造如下的<strong>fake_FILE</strong>就能够实现将字符串写到指定内存的操作。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-87222aecb7aca5e5.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="fake_FILE"><br>虽然看起来不能实现任意地址写任意数据，但若是输出我们输入的值时，则可实现任意地址写任意数据；就算输出的都是固定字符串，能够将一些判断标志改为其他值，而改变程序正常执行流程有时还是很有用的。</p>
+</blockquote>
+<h3 id="利用伪造stdin进行任意地址写"><a href="#利用伪造stdin进行任意地址写" class="headerlink" title="利用伪造stdin进行任意地址写"></a>利用伪造<strong>stdin</strong>进行任意地址写</h3><p><strong>stdin</strong>，即标准输出，默认为键盘，其本质也为一个FILE结构体，利用这种方法最终达到由我们从键盘输入的数据写到任意地址的效果。同样，首先我们需要定位到<strong>fread</strong>函数中获取输入的位置，即调用<strong>_IO_SYSREAD</strong>函数的地方。由前小节分析可知仅有在<strong>_IO_UNDERFLOW</strong>函数中会调用<strong>_IO_SYSREAD</strong>函数进行写入， 程序在<strong>_IO_file_xsgetn</strong>函数中是通过第<strong>1344</strong>行调用<strong>__underflow</strong>函数来间接调用该函数，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-8add78f4224dbae7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="条件判断(1)"><br>与利用<strong>stdout</strong>进行任意地址读有所不同的是，并不是每次执行都会顺理成章地去调用<strong>_IO_UNDERFLOW</strong>函数，而会有很多外部的限制条件。首先我们可以看到在调用<strong>__underflow</strong>函数之间就有了许多的限制。从调用处开始往上看，首先最息息相关的两个条件判断支，第一个为第<strong>1341</strong>行的判断要求<code>fp-&gt;_IO_buf_base != NULL &amp;&amp; want &lt; fp-&gt;_IO_buf_end - fp-&gt;_IO_buf_base</code>，其中<strong>want</strong>变量的值为传入的参数<strong>n</strong>，即想要读入的字节数；第二个条件为不满足第<strong>1316</strong>行的判断语句，即<code>want &gt; fp-&gt;_IO_read_end - fp-&gt;_IO_read_ptr</code>。其实除了这<strong>2</strong>个判断语句外，在第<strong>1302</strong>行的判断也不能为真，因为进入该分支后会调用<strong>_IO_doallocbuf</strong>函数重新分配缓冲区，会破坏我们事先构造好的<strong>FILE</strong>结构体，但由于该判断句的条件包含于<strong>1341</strong>行的判断句，所以不单独算一个条件。满足这两个条件后，程序正常执行到了<strong>__underflow</strong>函数，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-04ffb10e0191d12e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="条件判断(2)"><br>可以看到我们最终要调用的<strong>_IO_UNDERFLOW</strong>函数在该函数的最终结尾处，因此要小心的过掉上面的各个分支。通过观察，大部分分支在正常情况下都不会进入，需要注意的是一个在第<strong>296</strong>行的<strong>if</strong>语句不能满足，因此第<strong>3</strong>个条件为<code>fp-&gt;_IO_read_ptr &gt;= fp-&gt;_IO_read_end</code>，接下来进入<strong>_IO_UNDERFLOW</strong>函数内部，即<strong>_IO_new_file_underflow</strong>函数，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-b67a408b1f043fb7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="条件判断(3)"><br>在<strong>_IO_new_file_underflow</strong>函数的第<strong>531</strong>行调用了<strong>_IO_SYSREAD</strong>函数的调用，其上方仍有许多<strong>if</strong>分支，看似特别多，其实只有第<strong>478</strong>行的影响比较大，即第<strong>4</strong>个条件为<code>fp-&gt;_flags &amp; _IO_NO_READS == 0</code>。之后第<strong>484、487</strong>行的分支虽然都不能进入，但这些判断条件在调用前已经囊括了，因此不做重复搜集；第<strong>500</strong>行的条件分支也没有进去的必要，之后就能够顺利地调用<strong>_IO_SYSREAD</strong>函数，实现向<strong>fp-&gt;_IO_buf_base</strong>地址写入从键盘输入<strong>_IO_buf_base - _IO_buf_end</strong>长度数据的功能。</p>
+<blockquote>
+<p>综上，我们只要伪造满足这<strong>4</strong>个条件的<strong>stdin</strong>结构体就能够实现任意地址写，其中第<strong>1</strong>个条件与调用时本来要写入的数据长度有关，我们要伪造的写入大小应该比其本要写入的大小更大。比如，在调用<strong>read(0 , buf , 0x10)</strong>函数时，我们构造的<strong>_IO_buf_end - _IO_buf_base</strong>就应该大于<strong>0x10</strong>；第<strong>2、3</strong>个条件综合起来可构造<strong>_IO_read_ptr == fp-&gt;_IO_read_end</strong>来同时满足，也不知道给个什么值，就默认为<strong>0</strong>吧；第<strong>4</strong>个就是<strong>_flags</strong>属性的问题了，不包含<strong>_IO_NO_READS</strong>。<br>因此伪造的<strong>fake_FILE</strong>结构体大概长这样：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-11617a5f823d0117.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="fake_FILE"><br>在我们最终伪造好这个<strong>FILE</strong>结构体后再去调用针对<strong>stdin</strong>进行输入的函数就可以实现任意地址写了，常见的函数一般有<strong>scanf、fread、gets、fgets</strong>等。</p>
+</blockquote>
+<h3 id="修改stdin-gt-IO-buf-end而导致的堆溢出"><a href="#修改stdin-gt-IO-buf-end而导致的堆溢出" class="headerlink" title="修改stdin-&gt;_IO_buf_end而导致的堆溢出"></a>修改<strong>stdin-&gt;_IO_buf_end</strong>而导致的堆溢出</h3><p>再次回到执行<strong>fread</strong>函数过程中在<strong>_IO_new_file_underflow</strong>中调用<strong>_IO_SYSREAD</strong>将文件中的数据读入缓冲区的地方，即<strong>_IO_new_file_underflow</strong>的第<strong>531</strong>行，此时调用如下：</p>
+<figure class="highlight plain"><figcaption><span>fp->_IO_buf_base, fp->_IO_buf_end - fp->_IO_buf_base)```</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">通过上文的分析可知，**_IO_buf_base**指向所申请的堆的头部，**_IO_buf_end**指向所申请的堆的末尾，在执行**fread**过程中当**文件大小 &lt;&#x3D; 缓冲区大小**时（这个大小通常是**4K**），会执行到这一步，将文件中数据全部读入缓冲区中。但，正如这个调用语句所示，此处的**缓冲区大小**是由**_IO_buf_end - _IO_buf_base**所决定。</span><br><span class="line">有这样一种场景，在申请过缓冲区后，**_IO_buf_base**指向缓冲区的头部，而通过某些手段，我们能够修改**_IO_buf_end**为别的更大的值，在执行相应函数时则会造成堆溢出。而这种手段，我们可以在有**unsortbin attack**的条件下，很轻松地将**_IO_buf_end**修改为**main_arena**上的很大的值，那么我们就可以构造这样一个文件或输入，一直覆盖到**main_arena**之前的**free_hook**等敏感指针。</span><br><span class="line"></span><br><span class="line">### 劫持**vable**</span><br><span class="line">对**FILE**结构体的虚表的利用，早在**libc-2.23**版本时就有了**FSOP**之类的伪造**vtable**劫持控制流的利用方法等，但随着版本的更新，从**2.24**版本开始，对调用**vtable**的合法性检查也开始进行了**check**，这就导致了前版本中直接更改**vtable**的利用方法变得不可行。同样，在本文的**2.27**版本中，在调用**vtable**之前也是有这一定的**check**机制。下面我们就分析**vtable**的**check**机制，以及利用方法。</span><br><span class="line">首先我们来定位**vtable**调用的地方，从前小节的分析中，可以找到许多调用的地方，比如**_IO_new_file_xsputn**函数第**1266**行调用的**_IO_OVERFLOW**函数就是**vtable**的入口。追随**_IO_OVERFLOW**的脚步，可以在**glibc&#x2F;libio&#x2F;libioP.h**中找到如下宏定义：</span><br><span class="line">&#96;&#96;&#96;C</span><br><span class="line">#define _IO_OVERFLOW(FP, CH) JUMP1(__overflow, FP, CH)</span><br><span class="line">......</span><br><span class="line">#define JUMP1(FUNC, THIS, X1) (_IO_JUMPS_FUNC(THIS)-&gt;FUNC) (THIS, X1)</span><br><span class="line">......</span><br><span class="line">#define _IO_JUMPS_FUNC(THIS) (IO_validate_vtable (_IO_JUMPS_FILE_plus (THIS)))</span><br></pre></td></tr></table></figure>
+<p>通过多个宏定义，我们可以发现，在调用<strong>vtable</strong>所代表的函数之前，首先调用了<strong>IO_validate_vtable</strong>函数，该函数在<strong>glibc/libio/libioP.h</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-7304b1445b88fa61.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="IO_validate_vtable"><br>该函数首先判断了调用的<strong>vtable</strong>函数地址是否在<strong><strong>start_</strong>libc_IO_vtable</strong>与<strong><strong>stop_</strong>libc_IO_vtable</strong>之间，若在此之间，则说明是<strong>libc</strong>中的合法<strong>vtable</strong>地址。若不在这个区间，则会调用第<strong>876</strong>行的<strong>_IO_vtable_check</strong>函数进行进一步的检查。该函数在<strong>glibc/libio/vtable.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-29f1648d3d95daf1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_vtable_check"><br>由于存在预编译头，且<strong>SHARE、PTR_DEMANGLE</strong>是有定义的，因此会执行上面两个部分的检查。第一部分为判断引用的虚表指针是否为默认命名空间外重构的虚表指针，其中<strong>atomic_load_relaxed</strong>函数为获得加载指针的当前值，<strong>PTR_DEMANGLE</strong>函数则是类似<strong>canary</strong>之类的一个保护虚表不被修改的函数；第二部分则是检查引用的虚表指针是否为动态链接库中加载的函数。但我们在<strong>2.23</strong>版本中通常将堆或栈上的一块区域用来伪造为<strong>FILE</strong>结构体，同样<strong>vtable</strong>也就接在这个<strong>fake_FILE</strong>结构体的后面，所以上面的<strong>3</strong>个条件都不会满足。因此，在新版本中用曾经的利用方法最终会执行到<strong>_IO_vtable_check</strong>函数的第<strong>72</strong>行，报错并结束进程。<br>上面介绍完了新版本中加入的<strong>3</strong>个对<strong>vtable</strong>的<strong>check</strong>机制，下面讲讲大神们是如何绕过<strong>check</strong>并再次实现利用的。<br>由于<strong>_IO_vtable_check</strong>函数中的第一个检查，有<strong>PTR_DEMANGKE</strong>函数的存在，几乎时不能够伪造对应的条件；而第二个检查，若能够伪造，则可以选择其他更方便的利用方法，而不用继续在<strong>vtable</strong>的利用上死磕了，因此这两个检查在正常情况下难以绕过。于是在调用<strong>_IO_vtable_check</strong>函数前的检查则成了关键，即调用的虚表指针必须在<strong><strong>start_</strong>libc_IO_vtable</strong>与<strong><strong>stop_</strong>libc_IO_vtable</strong>之间。然后大佬们就找到了这样一组内部虚表<strong>_IO_str_jumps/_IO_wstr_jumps</strong>与<strong>_IO_file_jumps/_IO_wfile_jumps</strong>相对应，但其中的函数都换成了另外一组，如下图：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-f241a48bff14704a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_str_jumps"><br>并且发现其中的<strong>__finish</strong>对应的函数大有可为，<strong>_IO_str_finish</strong>函数在<strong>glibc/libio/strops.c</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-b407fe126bed0312.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_str_finish"><br>可以看到，当满足条件时，会将结构体中的<strong>_s._free_buffer</strong>作为函数指针，将<strong>_IO_buf_base</strong>作为参数进行执行，因此我们可以试着利用原来<strong>FSOP</strong>的利用方法，来构造一个满足条件的<strong>fake_FILE</strong>。</p>
+<blockquote>
+<p><strong>FSOP</strong>方法在<a href="https://www.jianshu.com/p/e1effb2e046e" target="_blank" rel="noopener">之前的文章</a>中有过介绍，在此只做简单描述。该方法的精髓为当程序从<strong>main</strong>函数返回或调用<strong>exit</strong>函数或<strong>libc</strong>进行<strong>abort</strong>操作时，会调用<strong>_IO_flush_all_lockp</strong>函数去遍历<strong>_IO_list_all</strong>链表中的每一个<strong>FILE</strong>结构体，而当<strong>FILE</strong>结构体满足<strong>(_mode &lt;= 0) &amp;&amp;  (_IO_write_ptr &gt; _IO_write_base)</strong>时，则会调用<strong>_IO_OVERFLOW</strong>函数，即<strong>vtable</strong>指针<strong>+ 0x18</strong>位置的函数。</p>
+</blockquote>
+<p>因此，对应到此处，想要成功调用<strong>_IO_str_finish</strong>函数，则需要在<strong>FSOP</strong>的基础上将的<strong>vtable</strong>改为<code>_IO_str_jumps - 8</code>，此为调用函数前的利用条件。在进入函数后，首先要满足判断条件<code>_IO_buf_base != NULL</code>以及<code>_flags &amp; _IO_USER_BUF == 0</code>，最后是利用条件<code>_s._free_buffer == system_addr || _IO_buf_base == &quot;/bin/sh\x00&quot;</code>或<code>_s._free_buffer == one_gadget</code>。其中<strong>_IO_strfile</strong>结构体在<strong>glibc/libio/strfile.h</strong>中定义如下：<br><img src="https://upload-images.jianshu.io/upload_images/8447551-2b6dd933c65d5997.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="_IO_strfile结构体"></p>
+<blockquote>
+<p>综上，我们想要需要构造如下的<strong>fake_FILE</strong>结构体来利用<strong>FSOP</strong>方法来绕过新版本中对<strong>vtable</strong>的<strong>check</strong>，从而达到利用的目的。<br><img src="https://upload-images.jianshu.io/upload_images/8447551-ad51abda8972a8d8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="fake_FILE"></p>
+</blockquote>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">FILE结构体及漏洞利用方法</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 Fish_o0O 的个人博客">Fish_o0O</a></p>
+        <p><span>发布时间:</span>2019年12月29日 - 19时18分</p>
+        <p><span>最后更新:</span>2020年03月15日 - 13时09分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/" title="FILE结构体及漏洞利用方法">http://fish-o0o.github.io/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://fish-o0o.github.io/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/　　作者: Fish_o0O" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" target="_blank" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+  
+    <a  href="/2019/10/24/%E5%B0%81%E4%BA%86%E4%B8%AA%E5%BA%93/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">封了个库</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x00-写在前面"><span class="toc-number">1.</span> <span class="toc-text">0x00 写在前面</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x01-数据结构"><span class="toc-number">2.</span> <span class="toc-text">0x01 数据结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x02-相关操作"><span class="toc-number">3.</span> <span class="toc-text">0x02 相关操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#fopen"><span class="toc-number">3.1.</span> <span class="toc-text">fopen</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fread"><span class="toc-number">3.2.</span> <span class="toc-text">fread</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fwrite"><span class="toc-number">3.3.</span> <span class="toc-text">fwrite</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fclose"><span class="toc-number">3.4.</span> <span class="toc-text">fclose</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x03-利用方法"><span class="toc-number">4.</span> <span class="toc-text">0x03 利用方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#利用伪造stdout进行任意地址读"><span class="toc-number">4.1.</span> <span class="toc-text">利用伪造stdout进行任意地址读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#利用伪造stdout进行任意地址写"><span class="toc-number">4.2.</span> <span class="toc-text">利用伪造stdout进行任意地址写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#利用伪造stdin进行任意地址写"><span class="toc-number">4.3.</span> <span class="toc-text">利用伪造stdin进行任意地址写</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#修改stdin-gt-IO-buf-end而导致的堆溢出"><span class="toc-number">4.4.</span> <span class="toc-text">修改stdin-&gt;_IO_buf_end而导致的堆溢出</span></a></li></ol></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/2019/10/24/%E5%B0%81%E4%BA%86%E4%B8%AA%E5%BA%93/" title="下一篇: 封了个库">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">FILE结构体及漏洞利用方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/10/24/%E5%B0%81%E4%BA%86%E4%B8%AA%E5%BA%93/">封了个库</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/09/14/Tcache%E6%9C%BA%E5%88%B6%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">Tcache机制及漏洞利用方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/08/17/Windows%E7%B3%BB%E7%BB%9F%E4%B8%8B%E5%85%B8%E5%9E%8B%E5%A0%86%E6%BC%8F%E6%B4%9E%E4%BA%A7%E7%94%9F%E5%8E%9F%E7%90%86%E5%8F%8A%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E7%A0%94%E7%A9%B6/">Windows系统下典型堆漏洞产生原理及利用方法研究</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/05/10/CISCN2019%20%E5%9B%BD%E8%B5%9B%E7%BA%BF%E4%B8%8A%E5%88%9D%E8%B5%9Bpwn/">CISCN2019 国赛线上初赛pwn</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/01/15/CVE-2012-0158%20Microsoft%20Office%20%E6%A0%88%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">CVE-2012-0158 Microsoft Office 栈溢出漏洞分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/12/29/Ubuntu%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%89%A9%E5%AE%B9%20Step%20by%20Step/">Ubuntu虚拟机扩容 Step by Step</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/12/15/%E7%BD%91%E9%BC%8E%E6%9D%AF%E7%AC%AC%E4%B8%80%E5%9C%BAWriteup/">网鼎杯第一场Writeup</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/11/27/XNUCA2018%E5%88%9D%E8%B5%9Bpwn%20writeup/">XNUCA2018初赛pwn writeup</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/20/BCTF2018%20baby_arena/">BCTF2018 baby_arena</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/08/19/0CTF2018%20babyheap/">0CTF2018 babyheap</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/06/26/CVE-2017-8570%20Microsoft%20Office%20%E9%80%BB%E8%BE%91%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%92%8C%E5%88%A9%E7%94%A8/">CVE-2017-8570 Microsoft Office 逻辑漏洞复现和利用</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/06/03/%E7%AC%AC%E4%BA%8C%E5%B1%8A%E5%BC%BA%E7%BD%91%E6%9D%AFpwn%20writeup%E3%80%90%E9%83%A8%E5%88%86%E3%80%91/">第二届强网杯pwn writeup【部分】</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/03/07/CVE-2017-0199%20Microsoft%20Office%20%E9%80%BB%E8%BE%91%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%92%8C%E5%88%A9%E7%94%A8/">CVE-2017-0199 Microsoft Office 逻辑漏洞复现和利用</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/11/21/HCTF2017%20Level2%E7%9A%84%E4%B8%A4%E9%81%93pwn%E9%A2%98/">HCTF2017 level2的两道pwn题</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/11/08/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/">刷Jarvis OJ时学到的新姿势【不定时更新】</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">由一道题目引发的DNS学习笔记</a></li></ul>
+    
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2020 Fish_o0O
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo &nbsp;&nbsp;</a><a href="https://github.com/maochunguang" target="_blank">Blog</a> by tommy
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >极客到访数: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 3;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>

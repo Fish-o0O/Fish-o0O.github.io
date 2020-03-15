@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="referrer" content="no-referrer" />
+  <!--解决简书外链403-->
+  <meta charset="utf-8">
+  <meta name="baidu-site-verification" content="L6Lm9d5Crl"/>
+  
+  
+  
+  
+  <title>由一道题目引发的DNS学习笔记 | Hacked By Fish_o0O</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="0x00 起因 前几天的全国高校网络信息安全管理运维挑战赛的DNS101，从上午查资料到结束，虽然最终做出来了，但却不解其原理，遂开启了对DNS的学习历程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="由一道题目引发的DNS学习笔记">
+<meta property="og:url" content="http://fish-o0o.github.io/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Hacked By Fish_o0O">
+<meta property="og:description" content="0x00 起因 前几天的全国高校网络信息安全管理运维挑战赛的DNS101，从上午查资料到结束，虽然最终做出来了，但却不解其原理，遂开启了对DNS的学习历程。">
+<meta property="og:locale" content="zh">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-6f291dee44ae150f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-c0efb1ed9a23c5e9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-123c57582fa3a728.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-dffae34ddfc59dea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-da06068fc4403d40.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/8447551-4c2e9e03a57b64b9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+<meta property="article:published_time" content="2017-11-07T07:26:00.000Z">
+<meta property="article:modified_time" content="2020-03-15T13:00:35.993Z">
+<meta property="article:author" content="Fish_o0O">
+<meta property="article:tag" content="随笔">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/8447551-6f291dee44ae150f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240">
+  
+    <link rel="alternative" href="/atom.xml" title="Hacked By Fish_o0O" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/avatar.png" class="js-avatar">
+            
+        </a>
+        <hgroup>
+          <h1 class="header-author"><a href="/">Fish_o0O</a></h1>
+        </hgroup>
+        
+        <p class="header-subtitle">KEEEEEEEEEP STUDY！</p>
+        
+        
+            <form>
+                <input type="text" class="st-default-search-input search" id="local-search-input" placeholder="搜索一下" autocomplete="off">
+            </form>
+            <div id="local-search-result"></div>
+        
+        
+            <script type="text/javascript">
+                (function() {
+                    'use strict';
+                    function getMatchData(keyword, data) {
+                        var matchData = [];
+                        for(var i =0;i<data.length;i++){
+                            if(data[i].title.toLowerCase().indexOf(keyword)>=0) 
+                                matchData.push(data[i])
+                        }
+                        return matchData;
+                    }
+                    var $input = $('#local-search-input');
+                    var $resultContent = $('#local-search-result');
+                    $input.keyup(function(){
+                        $.ajax({
+                            url: '/search.json',
+                            dataType: "json",
+                            success: function( json ) {
+                                var str='<ul class=\"search-result-list\">';                
+                                var keyword = $input.val().trim().toLowerCase();
+                                $resultContent.innerHTML = "";
+                                if ($input.val().trim().length <= 0) {
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                }
+                                var results = getMatchData(keyword, json);
+                                if(results.length === 0){
+                                    $resultContent.empty();
+                                    $('#switch-area').show();
+                                    return;
+                                } 
+                                for(var i =0; i<results.length; i++){
+                                    str += "<li><a href='"+ results[i].url +"' class='search-result-title'>"+ results[i].title +"</a></li>";
+                                }
+                                str += "</ul>";
+                                $resultContent.empty();
+                                $resultContent.append(str);
+                                $('#switch-area').hide();
+                            }
+                        });
+                    });
+                })();
+            </script>
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a  href="/archives/">主页</a></li>
+                        
+                            <li><a  href="/archives/">所有文章</a></li>
+                        
+                            <li><a  href="/about/">关于我</a></li>
+                        
+                            <li><a  href="/tags">Tags</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl github"  target="_blank" href="/Fish_o0O" title="github">github</a>
+                            
+                                <a class="fl rss"  target="_blank" href="/atom.xml" title="rss">rss</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        <a href="/tags/Pwn/" style="font-size: 20px;">Pwn</a> <a href="/tags/Vulnerability/" style="font-size: 10px;">Vulnerability</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 15px;">随笔</a>
+                    </div>
+                </section>
+                
+                
+                
+                
+                <section class="switch-part switch-part3">
+                
+                    <div id="js-aboutme">一个被兴趣牵着鼻子走的菜鸡</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>
+</div>
+
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Fish_o0O</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/avatar.png" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Fish_o0O</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">KEEEEEEEEEP STUDY！</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/archives/">主页</a></li>
+                
+                    <li><a href="/archives/">所有文章</a></li>
+                
+                    <li><a href="/about/">关于我</a></li>
+                
+                    <li><a href="/tags">Tags</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="github" target="_blank" href="/Fish_o0O" title="github">github</a>
+                    
+                        <a class="rss" target="_blank" href="/atom.xml" title="rss">rss</a>
+                    
+                </div>
+            </nav>
+        </header>
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-由一道题目引发的DNS学习笔记" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a  href="/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" class="article-date">
+      <time datetime="2017-11-07T07:26:00.000Z" itemprop="datePublished">2017-11-07</time>
+</a>
+
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      由一道题目引发的DNS学习笔记
+    </h1>
+  
+
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+
+        
+    <div class="article-tag tagcloud">
+        <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a></li></ul>
+    </div>
+
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h2 id="0x00-起因"><a href="#0x00-起因" class="headerlink" title="0x00 起因"></a>0x00 起因</h2><blockquote>
+<p>前几天的<strong>全国高校网络信息安全管理运维挑战赛</strong>的<strong>DNS101</strong>，从上午查资料到结束，虽然最终做出来了，但却不解其原理，遂开启了对DNS的学习历程。</p>
+</blockquote>
+<a id="more"></a>
+<hr>
+<h2 id="0x01-DNS是什么"><a href="#0x01-DNS是什么" class="headerlink" title="0x01 DNS是什么"></a>0x01 DNS是什么</h2><p><em>DNS（Domain Name System，域名系统），因特网上作为域名和IP地址相互映射的一个分布式数据库，能够使用户更方便的访问互联网，而不用去记住能够被机器直接读取的IP数串。通过主机名，最终得到该主机名对应的IP地址的过程叫做域名解析（或主机名解析）。</em> <strong>摘自百度百科</strong></p>
+<blockquote>
+<p>百科的解释非常直接，但对于我这种小白来说太过宽泛，看了之后有了个大致的了解，却也说不清到底是个啥，我还学要了解更多。<del>万一别人问起来至少要吹牛逼吹得高大上一些嘛</del></p>
+</blockquote>
+<hr>
+<h2 id="0x02-为什么会有DNS"><a href="#0x02-为什么会有DNS" class="headerlink" title="0x02 为什么会有DNS"></a>0x02 为什么会有DNS</h2><p>网络通讯大部分都是基于<strong>TCP/IP</strong>协议，而此协议则是基于<strong>IP地址</strong>，所以计算机在网络上进行通讯时只能识别如<strong>1.2.3.4</strong>之类的<strong>IP地址</strong>而不能识别<strong>域名</strong>。由于<strong>IP地址</strong>不方便记忆，于是需要DNS将输入的<strong>域名</strong>“翻译”成相对应的<strong>IP地址</strong>，正确访问对应的网页。</p>
+<hr>
+<h2 id="0x03-需要知道的一些术语"><a href="#0x03-需要知道的一些术语" class="headerlink" title="0x03 需要知道的一些术语"></a>0x03 需要知道的一些术语</h2><h3 id="域名-Domain-Name"><a href="#域名-Domain-Name" class="headerlink" title="域名(Domain Name)"></a><strong>域名</strong>(Domain Name)</h3><p>这大概是我们接触到的DNS最常用方式，也就是我们通常所说的网址如<strong>baidu.com</strong>,<strong>google.com</strong>等。</p>
+<h3 id="顶级域名-Top-Level-Domain"><a href="#顶级域名-Top-Level-Domain" class="headerlink" title="顶级域名(Top-Level Domain)"></a><strong>顶级域名</strong>(Top-Level Domain)</h3><p>又称一级域名，分为三类：一是<strong>国家和地区顶级域名</strong>(country code top-level domains，简称ccTLDs)，如<strong>cn</strong>，<strong>jp</strong>等；二是<strong>国际顶级域名</strong>(generic top-level domains，简称gTLDs)，如表示工商企业的<strong>com</strong>，表示网络提供商的<strong>net</strong>，表示非盈利组织的<strong>org</strong>等。三是<strong>新顶级域名</strong>（New gTLD）如通用的<strong>xyz</strong>、代表“红色”的<strong>red</strong>、代表“人”的<strong>men</strong>等一千多种。</p>
+<h3 id="全称域名-FullyQualified-Domain-Name"><a href="#全称域名-FullyQualified-Domain-Name" class="headerlink" title="全称域名(FullyQualified Domain Name)"></a><strong>全称域名</strong>(FullyQualified Domain Name)</h3><p>又称完全合格域名，是指主机名加上全称路径，全路径中列出了序列中所有域成员。可以从逻辑上准确地表示出主机在域名树中的位置，也可以说全称域名是主机名的一种完全表示形式。如<strong><a href="http://www.baidu.com" target="_blank" rel="noopener">www.baidu.com</a></strong>,<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>等。</p>
+<h3 id="IP地址-IP-Address"><a href="#IP地址-IP-Address" class="headerlink" title="IP地址(IP Address)"></a><strong>IP地址</strong>(IP Address)</h3><p><strong>IP地址</strong>用于以数字(IPv4)或字母数字(IPv6)的形式唯一地在网络上寻址。<br>一个IPv4地址是由四个数字和三个将数字分开的冒号所构成如<strong>127.0.0.1</strong>。随着全世界越来越多的设备和人员上线，对IPv4地址有限且需求达到顶峰，于是IPv6应运而生。IPv6遵循与IPv4相似的原则:允许设备在其所在的网络上被唯一引用，但是寻址语法包含字母、数字、字符以增加可用地址的数量，如<strong>fe80::45a8:3bcd:fb46:82b%36</strong>。</p>
+<h3 id="Zone文件-Zonefile"><a href="#Zone文件-Zonefile" class="headerlink" title="Zone文件(Zonefile)"></a><strong>Zone文件</strong>(Zonefile)</h3><p>Zonefile是一个包含单个域的不同<strong>记录</strong>的文本文件，文件中每一行都包含特定域的名称以及与其关联的值和类型。<br>如在google.com的zonefile中可能存在一行用于解析<strong>www</strong>并通过<strong>A记录</strong>映射到<strong>173.194.34.68</strong>(谷歌的ip)。</p>
+<h3 id="记录-Records"><a href="#记录-Records" class="headerlink" title="记录(Records)"></a><strong>记录</strong>(Records)</h3><p>DNS的<strong>记录</strong>是域和相关数据之间的独立映射。</p>
+<ul>
+<li><strong>A记录</strong>：又称<strong>IP指向</strong>，用户可以在此设置子域名并指向到自己的目标主机地址上，从而实现通过域名找到服务器。</li>
+</ul>
+<blockquote>
+<p>指向的目标主机地址类型只能使用<strong>IP地址</strong>。</p>
+</blockquote>
+<ul>
+<li><strong>PTR记录</strong>：<strong>指针记录</strong>，是<strong>A记录</strong>逆向记录，用于将<strong>IP地址</strong>解析为域名。</li>
+</ul>
+<ul>
+<li><strong>AAAA记录</strong>：IPv6下的<strong>A记录</strong>和<strong>PTR记录</strong>，可将一个域名解析到IPv6地址上，也可以将子域名解析到IPv6地址上。</li>
+</ul>
+<ul>
+<li><strong>CNAME记录</strong>：又称<strong>别名指向</strong>，用户可以为主机设置一个别名。如设置fish.o0O.com指向一个主机<a href="http://www.google.com那么以后就能用fish.o0O.com来代替访问www.google.com了。" target="_blank" rel="noopener">www.google.com那么以后就能用fish.o0O.com来代替访问www.google.com了。</a></li>
+</ul>
+<blockquote>
+<p><strong>CNAME</strong>的目标主机地址只能使用主机名，不能使用<strong>IP地址</strong>；主机名前不能有任何其他前缀，如<em>http://</em>等是不被允许的；<strong>A记录</strong>优先于<strong>CNAME记录</strong>，即如果一个主机地址同时存在<strong>A记录</strong>和<strong>CNAME记录</strong>，则<strong>CNAME记录</strong>不生效。</p>
+</blockquote>
+<ul>
+<li><strong>MX记录</strong>：<strong>邮箱交换记录</strong>，用于将以改域名为结尾的电子邮件指向对应的邮件服务器以进行处理。如用户所用的邮件十以域名fish.com结尾的，则需要在Zonefile中添加一条<strong>MX记录</strong>来处理所有以@fish.com结尾的邮件。</li>
+</ul>
+<blockquote>
+<p><strong>MX记录</strong>可以使用主机名或<strong>IP地址</strong>；<strong>MX记录</strong>可以通过设置优先级实现主辅服务器设置，“优先级”中的数字越小表示级别越高。也可以使用相同优先级达到负载均衡的目的；若在“主机名”中填入子域名则此<strong>MX记录</strong>只对该子域名生效。 </p>
+</blockquote>
+<ul>
+<li><strong>NS记录</strong>：<strong>域名服务器记录</strong>，用来表明由哪台服务器对该域名进行解析。如用户希望由1.2.3.4来解析fish.o0O.com，则需要设置fish.o0O.com的<strong>NS记录</strong>。</li>
+</ul>
+<blockquote>
+<p>“优先级”中的数字越小表示级别越高；“IP地址/主机名”中既可以填写<strong>IP地址</strong>，也可以填写像cat.o0O.com这样的主机地址，但必须保证该主机地址有效。如将fish.o0O.com的<strong>NS记录</strong>指向到cat.o0O.com，在设置<strong>NS记录</strong>的同时还需要设置cat.o0O.com的指向，否则<strong>NS记录</strong>将无法正常解析；<strong>NS记录</strong>优先于<strong>A记录</strong>，即如果一个主机地址同时存在<strong>NS记录</strong>和<strong>A记录</strong>，则<strong>A记录</strong>不生效。这里的<strong>NS记录</strong>只对子域名生效。</p>
+</blockquote>
+<ul>
+<li><strong>SOA记录</strong>：<strong>起始授权机构记录</strong>，<strong>NS记录</strong>说明了有多台服务器在进行解析，而<strong>SOA记录</strong>则说明了在众多<strong>NS记录</strong>中主要服务器的<strong>记录</strong>。</li>
+</ul>
+<blockquote>
+<p><strong>NS记录</strong>和<strong>SOA记录</strong>是任何一个DNS的<strong>Zonefile</strong>中都不可或缺的两条<strong>记录</strong>。</p>
+</blockquote>
+<ul>
+<li><strong>SRV记录</strong>：<strong>服务器资源记录</strong>，是在RFC2052中新定义的<strong>记录</strong>，很多老版本的DNS并不支持此<strong>记录</strong>。<strong>SRV记录</strong>说明了一个服务器能够提供什么样的服务，域内的计算机需要依赖DNS中的<strong>SRV记录</strong>来定位域控制器。</li>
+</ul>
+<ul>
+<li><strong>TXT记录</strong>：为某条<strong>记录</strong>设置说明，起注释的作用。</li>
+</ul>
+<blockquote>
+<p>此处只列举了一部分<strong>记录</strong>，实际上还存在DNS还存在很多类型的<strong>记录</strong></p>
+</blockquote>
+<h3 id="An-Example-of-Zonefile"><a href="#An-Example-of-Zonefile" class="headerlink" title="An Example of Zonefile"></a>An Example of Zonefile</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">$TTL     86400;      &#x2F;&#x2F; specified in seconds, but could be 24h or 1d</span><br><span class="line">$ORIGIN  example.com</span><br><span class="line"></span><br><span class="line">@ 1D IN SOA ns1.example.com. hostmaster.example.com. (</span><br><span class="line">            123456 ; &#x2F;&#x2F; serial</span><br><span class="line">                  3H     ;   &#x2F;&#x2F; refresh</span><br><span class="line">            15     ; &#x2F;&#x2F; retry</span><br><span class="line">            1w     ; &#x2F;&#x2F; example</span><br><span class="line">            3h     ; &#x2F;&#x2F; minimum</span><br><span class="line">            )</span><br><span class="line"></span><br><span class="line">      IN NS ns1.example.com</span><br><span class="line">      IN NS ns2.example.com &#x2F;&#x2F; Good practice to specify multiple nameservers for fault-tolerance</span><br><span class="line">      IN NS ns1.foo.com     &#x2F;&#x2F; Using external nameservers for fault-tolerance is even better</span><br><span class="line">      IN NS ns1.bar.com     &#x2F;&#x2F; And multiple external nameservers is better still!</span><br><span class="line"></span><br><span class="line">      IN MX 10 mail.example.com &#x2F;&#x2F; Here, 10 is the highest priority mail server, so is the first to be used</span><br><span class="line">      IN MX 20 mail.foo.com     &#x2F;&#x2F; If the highest priority mail server is unavailable, fall back to this one</span><br><span class="line"></span><br><span class="line">ns1   IN A     1.2.3.4</span><br><span class="line">ns1   IN AAAA  1234:5678:a1234::12 &#x2F;&#x2F; A and AAAA records can co-exist happily. Useful for supporting early IPv6 adopters.</span><br><span class="line">ns2   IN A     5.6.7.8</span><br><span class="line">ns2   IN A     1234:5678:a1234::89</span><br><span class="line">mail  IN A     1.3.5.7</span><br><span class="line">www   IN A     2.4.6.8</span><br><span class="line">sip   IN CNAME www.example.com.</span><br><span class="line">ftp   IN CNAME www.example.com.</span><br><span class="line">mail  IN TXT   &quot;v&#x3D;spf1 a -all&quot;</span><br><span class="line"></span><br><span class="line">_sip._tcp.example.com. IN SRV 0 5 5060 sip.example.com.</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="0x04-DNS如何工作"><a href="#0x04-DNS如何工作" class="headerlink" title="0x04 DNS如何工作"></a>0x04 DNS如何工作</h2><h3 id="根服务器-Root-Servers"><a href="#根服务器-Root-Servers" class="headerlink" title="根服务器(Root Servers)"></a><strong>根服务器</strong>(Root Servers)</h3><p>DNS树的顶端是13个(从a到m)由ICANN(<a href="https://icann.org/" target="_blank" rel="noopener">Internet Corporation for Assigned Names and Numbers</a>)控制的独立的<strong>根服务器</strong>。目的是处理那些级别较低的域名服务器不能充分处理的与<strong>顶级域名</strong>相关的信息请求。<strong>根服务器</strong>不会对自己无法处理的域名保存任何<strong>记录</strong>，只会不停地对请求做出响应，并把域名解析到最优的域名服务器去进行进一步处理。</p>
+<blockquote>
+<p>如我们对<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>的请求直接进入<strong>根服务器</strong>，<strong>根服务器</strong>将解析<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>的<strong>记录</strong>，但无法找到它的地址，<strong>根服务器</strong>会将这个域名的<strong>com</strong>部分匹配，并将这个信息传递回来源处。</p>
+</blockquote>
+<h3 id="TLD服务器"><a href="#TLD服务器" class="headerlink" title="TLD服务器"></a><strong>TLD服务器</strong></h3><p>接着上一步，一旦对<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>的请求得到回复，<strong>根服务器</strong>就会代替<strong>域名服务器</strong>接受来自发送请求的计算机的询问：<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>的地址在哪里。<strong>TLD服务器</strong>将尝试在其<strong>记录</strong>中找到<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>的信息，但只能回复关于<strong>google.com</strong>的详细信息。在这一阶段，计算机会知道这个服务器以<strong>com</strong>解析，且至少能够将地址映射到某一个<strong>IP地址</strong>。</p>
+<h3 id="域级域名服务器-Domain-level-Nameservers"><a href="#域级域名服务器-Domain-level-Nameservers" class="headerlink" title="域级域名服务器(Domain-level Nameservers)"></a><strong>域级域名服务器</strong>(Domain-level Nameservers)</h3><p>到了这个阶段，对<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>的请求已经被回复了两次：第一次由<strong>根服务器</strong>不处理任何<strong>记录</strong>但知道是需要归于<strong>com</strong>处理；再一次由<strong>TLD服务器</strong>处理<strong>com</strong>并且知道<strong>google</strong>在哪里。即使如此，我们仍还有一个<strong>www</strong>未处理，为此，该请求将传给<strong>google.com</strong>的服务器进行解析。<strong>google</strong>的服务器将在其<strong>记录</strong>中正确查找到<strong><a href="http://www.google.com" target="_blank" rel="noopener">www.google.com</a></strong>，并使用其对应的<strong>IP地址</strong>进行响应。</p>
+<blockquote>
+<p>至此，我们完成了一个完整的访问请求，看似步骤复杂，实际上DNS查询在短短几秒之内就会完成。</p>
+</blockquote>
+<hr>
+<h2 id="0x05主机特定的DNS配置-Host-specific-DNS-Configuration"><a href="#0x05主机特定的DNS配置-Host-specific-DNS-Configuration" class="headerlink" title="0x05主机特定的DNS配置(Host-specific DNS Configuration)"></a>0x05主机特定的DNS配置(Host-specific DNS Configuration)</h2><blockquote>
+<p>也就是我们常说的hosts文件，我一直以来有个疑问为什么装破解版软件时需要改hosts文件，为什么改了hosts文件之后就能够访问谷歌网站，hosts文件到底是何方神圣？这一节将从Unix系统的方面说一说<strong>主机特定的DNS配置</strong>，Linux系统和Windows系统类似。</p>
+</blockquote>
+<h3 id="etc-hosts"><a href="#etc-hosts" class="headerlink" title="/etc/hosts"></a>/etc/hosts</h3><p><strong>/etc/hosts</strong>具有充当本地替代DNS的作用，若用户想要在特定的计算机上覆盖DNS中的<strong>记录</strong>而又不想影响其他用户使用该<strong>记录</strong>，则可使用<strong>/etc/hosts</strong>来覆盖DNS，或者将其作为DNS的备份：若在<strong>/etc/hosts</strong>中的基础结构中指定了关键型的hosts，则即使在持有用户域名的<strong>域名服务器</strong>中缺少<strong>Zonefile</strong>时也能够正常解析。<br>但是<strong>/etc/hosts</strong>远远不能DNS的替代品：DNS具有更加丰富的<strong>记录类型</strong>，而<strong>/etc/hosts</strong>只能相当于众多<strong>记录</strong>中的<strong>A记录</strong>。<br><strong>/etc/hosts</strong>大概是长这个样纸滴：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1 localhost </span><br><span class="line">255.255.255.255 broadcasthost </span><br><span class="line">:: 1 localhost </span><br><span class="line">fe80 :: 1％ lo0 localhost</span><br><span class="line"></span><br><span class="line">192.168.2.2 sql01 </span><br><span class="line">192.168.2.3 sql02 </span><br><span class="line">192.168.1.10 fish bubble o0O</span><br></pre></td></tr></table></figure>
+<p>该文件的前四行是系统自带的，并在启动时生效。前两行分别将<strong>localhost</strong>、<strong>127.0.0.1</strong>之间和<strong>broadcasthost</strong>、<strong>255.255.255.255</strong>之间建立映射，后面两行其实是在IPv6下第一行的等价物。在第四行之后，我们可以指定一个名称并将其映射到一个IP地址。如第五行，我们将<strong>sql01</strong>映射到<strong>192.168.2.2</strong>，这意味着在具有这个<strong>/etc/hosts</strong>的主机上我们可以访问<strong>sql01</strong>并以<strong>192.168.2.2</strong>作为响应，第六行同理。而第七行却是一个奇怪的例子，一个IP地址对应了3个域名，当以这种方式引用时(对于每个IP地址使用多个以空格分隔的名称)，则可以使用任意指定的域名访问该IP地址，即使用<strong>fish</strong>，<strong>bubble</strong>和<strong>o0O</strong>都是访问<strong>192.168.1.10</strong>的有效方式。</p>
+<hr>
+<h2 id="0x06-缓存-Caching"><a href="#0x06-缓存-Caching" class="headerlink" title="0x06 缓存(Caching)"></a>0x06 缓存(Caching)</h2><p>为降低硬件成本、减轻网络压力，并加快对常见域名的响应速度，很多客户机都会<strong>缓存</strong>DNS<strong>记录</strong>。在<strong>Zonefile</strong>的<strong>SOA记录</strong>中会指定一个<strong>expiry</strong>，该值将决定<strong>Zonefile</strong>维持改状态的时间，在此段时间内再起发起相同的请求就回直接利用<strong>缓存</strong>解析而不用再向<strong>根服务器</strong>发起解析请求。</p>
+<hr>
+<h2 id="0x07-生存时间-TTLs"><a href="#0x07-生存时间-TTLs" class="headerlink" title="0x07 生存时间(TTLs)"></a>0x07 生存时间(TTLs)</h2><p>既然提到了<strong>缓存</strong>那就不得不提<strong>TTL</strong>，TTL能使个别<strong>记录</strong>强制到期，从而绕过<strong>SOA记录</strong>中的<strong>expiry</strong>。如<strong>o0O.com</strong>已经转移到了一个新的网络主机，为确保服务正常运行，可通过减少<strong>www</strong>和*在<strong>o0O.com</strong>的<strong>Zonefile</strong>中的<strong>TTL</strong>来实现切换。具有合适的高<strong>TTL</strong>和适当的<strong>缓存</strong>，计算机响应请求的时间以及<strong>缓存</strong>更新<strong>记录</strong>的时间都将大大缩短。</p>
+<blockquote>
+<p>解析<strong>域名</strong>时会最先检查本地的<strong>hosts文件</strong>中是否存在该<strong>域名</strong>的映射关系，若有则直接调用该<strong>IP地址</strong>映射，完成解析。若无，则查找本地DNS解析器<strong>缓存</strong>中有无该<strong>域名</strong>的映射关系，若有也直接返回完成解析，若无再遵循上文中所说的进入正常的<strong>域名</strong>解析流程。</p>
+</blockquote>
+<hr>
+<h2 id="0x08-这次比赛的DNS101"><a href="#0x08-这次比赛的DNS101" class="headerlink" title="0x08 这次比赛的DNS101"></a>0x08 这次比赛的DNS101</h2><blockquote>
+<p>查询DNS的工具有很多，在这里就说一下比赛做题的时候遇到的<strong>dig</strong>工具吧。</p>
+</blockquote>
+<p><strong>dig</strong>是Unix平台自带的可以用来查看特定域名服务器<strong>记录</strong>工具，我用到的基本用法为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dig + 域名 + 记录类型&#x2F;&#x2F;若不指定记录类型则默认为A记录</span><br></pre></td></tr></table></figure>
+<ul>
+<li>比赛中直接挖<strong>TXT记录</strong>就会发现有一条<strong>flag-id-[…].flag.src.edu-info.edu.cn</strong>的<strong>记录</strong>。</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/8447551-6f291dee44ae150f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="以TXT类型进行dig"></p>
+<ul>
+<li>而如果以<strong>ANY</strong>的类型来挖，则会尝试所有类型的记录，可以发现在存在一条<strong>NSEC</strong>记录解析到<em>n.flag.src.edu-info.edu.cn</em>并且这个域名存在<strong>TXT记录</strong>、<strong>RRSIG记录</strong>和<strong>NSEC记录</strong>。</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/8447551-c0efb1ed9a23c5e9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="以ANY类型进行dig"></p>
+<ul>
+<li>继续向下挖掘，发现<strong>NSEC记录</strong>中又出现了新的域名，并且也存在<strong>TXT记录</strong>、<strong>RRSIG记录</strong>和<strong>NSEC记录</strong>。</li>
+</ul>
+<p><img src="http://upload-images.jianshu.io/upload_images/8447551-123c57582fa3a728.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="对得到的新域名进行dig"></p>
+<blockquote>
+<p>现在学了DNS以上相关知识后，可以判断这道题的DNS服务器那边的是在<strong>Zonefile</strong>中以<strong>NSEC记录</strong>的方式形成了一个链表将这些域名链接起来，*.flag.src.edu-info.edu.cn型的域名都有个<strong>TXT记录</strong>提示最终的域名为<strong>flag-id-[…].flag.src.edu-info.edu.cn</strong>这个形式的。当时手动<strong>dig</strong>完全不知道原理，就知道输完了之后会得到一个新域名又继续<strong>dig</strong>，感觉灰常神奇，为什么有这么多挖不完的域名。也理解了那些大网站如何实现域名第一个<strong>.</strong>前面有那么多种名称。然后最后吐槽一句，python库是真的神奇，当初啥都不知道的时候只有靠切片来维持生活，<strong>dig</strong>到一半输出格式不同了还切不动，然后参考浙大表哥们WriteUp中的脚本后。。。<del>一万只草泥马奔腾而过</del></p>
+</blockquote>
+<ul>
+<li>附上我的脚本以及结果：</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> tqdm <span class="keyword">import</span> tqdm</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line">rerr = re.compile(<span class="string">'NSEC.+flag.src.edu-info.edu.cn'</span>)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">execCmd</span><span class="params">(cmd)</span>:</span>  </span><br><span class="line">    r = os.popen(cmd)  </span><br><span class="line">    text = r.read()  </span><br><span class="line">    r.close()  </span><br><span class="line">    <span class="keyword">return</span> text</span><br><span class="line">    </span><br><span class="line">payload = <span class="string">'dig any what.is.my.flag.src.edu-info.edu.cn'</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>,<span class="number">10000</span>):</span><br><span class="line">	a = execCmd(payload)</span><br><span class="line">	rerrrrr = rerr.search(a)</span><br><span class="line">	payload=rerrrrr.group(<span class="number">0</span>).replace(<span class="string">'NSEC'</span>,<span class="string">''</span>).lstrip()</span><br><span class="line">	<span class="keyword">print</span> payload</span><br><span class="line">	payload=<span class="string">'dig any '</span>+payload</span><br></pre></td></tr></table></figure>
+<p><img src="http://upload-images.jianshu.io/upload_images/8447551-dffae34ddfc59dea.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="失败"></p>
+<ul>
+<li>附上浙大大表哥们的脚本及结果：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">import dns.resolver</span><br><span class="line">url&#x3D;&quot;what.is.my.flag.src.edu-info.edu.cn&quot;</span><br><span class="line">while True:</span><br><span class="line">	emm &#x3D; dns.resolver.query(url,&quot;NSEC&quot;)</span><br><span class="line">	url&#x3D;list(emm)[0].next.to_text()</span><br><span class="line">	print(url)</span><br></pre></td></tr></table></figure>
+<img src="http://upload-images.jianshu.io/upload_images/8447551-da06068fc4403d40.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="成功"></li>
+<li>然后再将得到的<strong>flag-id-ztfrneclyudrfq3e6endq5.zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz.zzzzzzz.flag.src.edu-info.edu.cn</strong>拿去dig得到了flag<br><img src="http://upload-images.jianshu.io/upload_images/8447551-4c2e9e03a57b64b9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="flag"></li>
+</ul>
+<hr>
+<h2 id="0x09-参考资料"><a href="#0x09-参考资料" class="headerlink" title="0x09 参考资料"></a>0x09 参考资料</h2><p><a href="http://www.opsschool.org/en/latest/dns_101.html#domain-level-nameservers" target="_blank" rel="noopener">DNS 101</a><br><a href="http://blog.csdn.net/eroswang/article/details/6576190" target="_blank" rel="noopener">常用域名记录解释</a><br><a href="http://blog.sina.com.cn/s/blog_502c8cc40100zxpv.html" target="_blank" rel="noopener">DNS原理及其解析过程</a><br><a href="http://blog.sina.com.cn/s/blog_502c8cc40100zxpv.html" target="_blank" rel="noopener">域名配置Zone文件</a></p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a  href="/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">由一道题目引发的DNS学习笔记</a></p>
+        <p><span>文章作者:</span><a  href="/" title="访问 Fish_o0O 的个人博客">Fish_o0O</a></p>
+        <p><span>发布时间:</span>2017年11月07日 - 07时26分</p>
+        <p><span>最后更新:</span>2020年03月15日 - 13时00分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="由一道题目引发的DNS学习笔记">http://fish-o0o.github.io/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://fish-o0o.github.io/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/　　作者: Fish_o0O" title=""></span>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license noopener" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" target="_blank" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+    <a  href="/2017/11/08/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          刷Jarvis OJ时学到的新姿势【不定时更新】
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0x00-起因"><span class="toc-number">1.</span> <span class="toc-text">0x00 起因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x01-DNS是什么"><span class="toc-number">2.</span> <span class="toc-text">0x01 DNS是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x02-为什么会有DNS"><span class="toc-number">3.</span> <span class="toc-text">0x02 为什么会有DNS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x03-需要知道的一些术语"><span class="toc-number">4.</span> <span class="toc-text">0x03 需要知道的一些术语</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#域名-Domain-Name"><span class="toc-number">4.1.</span> <span class="toc-text">域名(Domain Name)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#顶级域名-Top-Level-Domain"><span class="toc-number">4.2.</span> <span class="toc-text">顶级域名(Top-Level Domain)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#全称域名-FullyQualified-Domain-Name"><span class="toc-number">4.3.</span> <span class="toc-text">全称域名(FullyQualified Domain Name)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IP地址-IP-Address"><span class="toc-number">4.4.</span> <span class="toc-text">IP地址(IP Address)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Zone文件-Zonefile"><span class="toc-number">4.5.</span> <span class="toc-text">Zone文件(Zonefile)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#记录-Records"><span class="toc-number">4.6.</span> <span class="toc-text">记录(Records)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#An-Example-of-Zonefile"><span class="toc-number">4.7.</span> <span class="toc-text">An Example of Zonefile</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x04-DNS如何工作"><span class="toc-number">5.</span> <span class="toc-text">0x04 DNS如何工作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#根服务器-Root-Servers"><span class="toc-number">5.1.</span> <span class="toc-text">根服务器(Root Servers)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TLD服务器"><span class="toc-number">5.2.</span> <span class="toc-text">TLD服务器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域级域名服务器-Domain-level-Nameservers"><span class="toc-number">5.3.</span> <span class="toc-text">域级域名服务器(Domain-level Nameservers)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x05主机特定的DNS配置-Host-specific-DNS-Configuration"><span class="toc-number">6.</span> <span class="toc-text">0x05主机特定的DNS配置(Host-specific DNS Configuration)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#etc-hosts"><span class="toc-number">6.1.</span> <span class="toc-text">&#x2F;etc&#x2F;hosts</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x06-缓存-Caching"><span class="toc-number">7.</span> <span class="toc-text">0x06 缓存(Caching)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x07-生存时间-TTLs"><span class="toc-number">8.</span> <span class="toc-text">0x07 生存时间(TTLs)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x08-这次比赛的DNS101"><span class="toc-number">9.</span> <span class="toc-text">0x08 这次比赛的DNS101</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0x09-参考资料"><span class="toc-number">10.</span> <span class="toc-text">0x09 参考资料</span></a></li></ol>
+</div>
+<style>
+    .left-col .switch-btn {
+        display: none;
+    }
+    .left-col .switch-area {
+        display: none;
+    }
+</style>
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+            $(".switch-btn, .switch-area").fadeOut(300);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+            $(".switch-btn, .switch-area").fadeIn(500);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+        $(".switch-btn, .switch-area").show();
+    }
+</script>
+
+
+
+
+
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a  href="/2017/11/08/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/" title="上一篇: 刷Jarvis OJ时学到的新姿势【不定时更新】">
+                <i class="fa fa-angle-left"></i>
+            </a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a  href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2019/12/29/FILE%E7%BB%93%E6%9E%84%E4%BD%93%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">FILE结构体及漏洞利用方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/10/24/%E5%B0%81%E4%BA%86%E4%B8%AA%E5%BA%93/">封了个库</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/09/14/Tcache%E6%9C%BA%E5%88%B6%E5%8F%8A%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95/">Tcache机制及漏洞利用方法</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/08/17/Windows%E7%B3%BB%E7%BB%9F%E4%B8%8B%E5%85%B8%E5%9E%8B%E5%A0%86%E6%BC%8F%E6%B4%9E%E4%BA%A7%E7%94%9F%E5%8E%9F%E7%90%86%E5%8F%8A%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E7%A0%94%E7%A9%B6/">Windows系统下典型堆漏洞产生原理及利用方法研究</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/05/10/CISCN2019%20%E5%9B%BD%E8%B5%9B%E7%BA%BF%E4%B8%8A%E5%88%9D%E8%B5%9Bpwn/">CISCN2019 国赛线上初赛pwn</a></li><li class="post-list-item"><a class="post-list-link" href="/2019/01/15/CVE-2012-0158%20Microsoft%20Office%20%E6%A0%88%E6%BA%A2%E5%87%BA%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">CVE-2012-0158 Microsoft Office 栈溢出漏洞分析</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/12/29/Ubuntu%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%89%A9%E5%AE%B9%20Step%20by%20Step/">Ubuntu虚拟机扩容 Step by Step</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/12/15/%E7%BD%91%E9%BC%8E%E6%9D%AF%E7%AC%AC%E4%B8%80%E5%9C%BAWriteup/">网鼎杯第一场Writeup</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/11/27/XNUCA2018%E5%88%9D%E8%B5%9Bpwn%20writeup/">XNUCA2018初赛pwn writeup</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/09/20/BCTF2018%20baby_arena/">BCTF2018 baby_arena</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/08/19/0CTF2018%20babyheap/">0CTF2018 babyheap</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/06/26/CVE-2017-8570%20Microsoft%20Office%20%E9%80%BB%E8%BE%91%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%92%8C%E5%88%A9%E7%94%A8/">CVE-2017-8570 Microsoft Office 逻辑漏洞复现和利用</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/06/03/%E7%AC%AC%E4%BA%8C%E5%B1%8A%E5%BC%BA%E7%BD%91%E6%9D%AFpwn%20writeup%E3%80%90%E9%83%A8%E5%88%86%E3%80%91/">第二届强网杯pwn writeup【部分】</a></li><li class="post-list-item"><a class="post-list-link" href="/2018/03/07/CVE-2017-0199%20Microsoft%20Office%20%E9%80%BB%E8%BE%91%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%E5%92%8C%E5%88%A9%E7%94%A8/">CVE-2017-0199 Microsoft Office 逻辑漏洞复现和利用</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/11/21/HCTF2017%20Level2%E7%9A%84%E4%B8%A4%E9%81%93pwn%E9%A2%98/">HCTF2017 level2的两道pwn题</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/11/08/%E5%88%B7Jarvis%20OJ%E6%97%B6%E5%AD%A6%E5%88%B0%E7%9A%84%E6%96%B0%E5%A7%BF%E5%8A%BF%5B%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0%5D/">刷Jarvis OJ时学到的新姿势【不定时更新】</a></li><li class="post-list-item"><a class="post-list-link" href="/2017/11/07/%E7%94%B1%E4%B8%80%E9%81%93%E9%A2%98%E7%9B%AE%E5%BC%95%E5%8F%91%E7%9A%84DNS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">由一道题目引发的DNS学习笔记</a></li></ul>
+    
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+    <script>
+        $(".post-list").addClass("toc-article");
+        // $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#toc, .switch-btn, .switch-area").toggle();
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+                $(".switch-btn, .switch-area").fadeToggle(300);
+            }
+        })
+    </script>
+
+
+
+
+    <script>
+        
+    </script>
+
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2020 Fish_o0O
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo &nbsp;&nbsp;</a><a href="https://github.com/maochunguang" target="_blank">Blog</a> by tommy
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >极客到访数: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 3;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>
